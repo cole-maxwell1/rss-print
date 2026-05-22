@@ -1,0 +1,96 @@
+{{ define "content" }}
+<div class="px-4 sm:px-6 lg:px-8">
+    <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto">
+            <h1 class="text-base font-semibold leading-6 text-gray-900">Feeds</h1>
+            <p class="mt-2 text-sm text-gray-700">RSS and Atom feeds watched by the print worker.</p>
+        </div>
+    </div>
+
+    {{ if .Notice }}
+    <div class="mt-6 rounded-md bg-green-50 p-4 text-sm text-green-700">{{ .Notice }}</div>
+    {{ end }}
+    {{ if .Error }}
+    <div class="mt-6 rounded-md bg-red-50 p-4 text-sm text-red-700">{{ .Error }}</div>
+    {{ end }}
+
+    <form class="mt-8 grid grid-cols-1 gap-4 rounded-lg bg-white p-4 shadow ring-1 ring-black ring-opacity-5 md:grid-cols-2"
+        action="/feeds" method="POST" hx-post="/feeds" hx-target="#page-content" hx-swap="innerHTML">
+        <div>
+            <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Name</label>
+            <input id="name" name="name" type="text" class="mt-2 block w-full rounded-md border-0 px-3 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-gray-800 sm:text-sm">
+        </div>
+        <div>
+            <label for="url" class="block text-sm font-medium leading-6 text-gray-900">Feed URL</label>
+            <input id="url" name="url" type="url" required class="mt-2 block w-full rounded-md border-0 px-3 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-gray-800 sm:text-sm">
+        </div>
+        <div>
+            <label for="auth_header_name" class="block text-sm font-medium leading-6 text-gray-900">Auth header name</label>
+            <input id="auth_header_name" name="auth_header_name" type="text" autocomplete="off" class="mt-2 block w-full rounded-md border-0 px-3 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-gray-800 sm:text-sm">
+        </div>
+        <div>
+            <label for="auth_header_value" class="block text-sm font-medium leading-6 text-gray-900">Auth header value</label>
+            <input id="auth_header_value" name="auth_header_value" type="password" autocomplete="new-password" class="mt-2 block w-full rounded-md border-0 px-3 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-gray-800 sm:text-sm">
+        </div>
+        <div>
+            <label for="poll_interval" class="block text-sm font-medium leading-6 text-gray-900">Poll interval</label>
+            <input id="poll_interval" name="poll_interval" type="number" min="1" value="30" required class="mt-2 block w-full rounded-md border-0 px-3 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-gray-800 sm:text-sm">
+        </div>
+        <div>
+            <label for="printer_id" class="block text-sm font-medium leading-6 text-gray-900">Feed printer</label>
+            <select id="printer_id" name="printer_id" class="mt-2 block w-full rounded-md border-0 px-3 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-gray-800 sm:text-sm">
+                <option value="">Global default</option>
+                {{ range .Printers }}
+                <option value="{{ .ID }}">{{ .Name }}</option>
+                {{ end }}
+            </select>
+        </div>
+        <div class="flex items-center gap-3 md:col-span-2">
+            <input id="auto_print" name="auto_print" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-gray-800 focus:ring-gray-800">
+            <label for="auto_print" class="text-sm font-medium text-gray-900">Auto-print new articles</label>
+        </div>
+        <div class="md:col-span-2">
+            <button type="submit" class="rounded-md bg-gray-800 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-700">Add feed</button>
+        </div>
+    </form>
+
+    <div class="mt-8 flow-root">
+        <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Name</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">URL</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Auto Print</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Auth</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Poll</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Last Error</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            {{ range .Feeds }}
+                            <tr>
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">{{ .Name }}</td>
+                                <td class="px-3 py-4 text-sm text-gray-500">{{ .URL }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ if .AutoPrint }}Yes{{ else }}No{{ end }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ if .AuthHeaderName }}{{ .AuthHeaderName }}{{ else }}-{{ end }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .PollInterval }} min</td>
+                                <td class="px-3 py-4 text-sm text-gray-500">{{ if .LastError }}{{ .LastError }}{{ else }}-{{ end }}</td>
+                            </tr>
+                            {{ else }}
+                            <tr>
+                                <td colspan="6" class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 text-center text-gray-500">
+                                    No feeds configured yet.
+                                </td>
+                            </tr>
+                            {{ end }}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}

@@ -1,0 +1,62 @@
+{{ define "nav" }}
+{{ if .User }}
+<nav id="site-nav" class="bg-gray-800" hx-swap-oob="outerHTML">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <span class="text-white font-bold text-xl">RSS Print</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4" hx-boost="true" hx-target="#page-content" hx-swap="innerHTML" hx-push-url="true">
+                        <a href="/" class="{{ if eq .Path "/" }}bg-gray-900 text-white{{ else }}text-gray-300 hover:bg-gray-700 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium"
+                            aria-current="page">Dashboard</a>
+                        <a href="/feeds"
+                            class="{{ if or (eq .Path "/feeds") (eq .Path "/feed") }}bg-gray-900 text-white{{ else }}text-gray-300 hover:bg-gray-700 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium">Feeds</a>
+                        <a href="/printers"
+                            class="{{ if eq .Path "/printers" }}bg-gray-900 text-white{{ else }}text-gray-300 hover:bg-gray-700 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium">Printers</a>
+                    </div>
+                </div>
+            </div>
+            <div class="hidden md:block">
+                <div class="ml-4 flex items-center md:ml-6">
+                    <span class="text-gray-300 mr-4">{{ .User.Username }}</span>
+                    <form action="/logout" method="POST">
+                        <button type="submit"
+                            class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+{{ end }}
+{{ end }}
+
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-100">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSS Auto-Print Server</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
+        integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
+        crossorigin="anonymous"></script>
+</head>
+
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        {{ template "nav" . }}
+
+        <main>
+            <div id="page-content" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                {{ template "content" . }}
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

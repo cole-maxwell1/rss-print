@@ -1,0 +1,99 @@
+{{ define "content" }}
+<div class="px-4 sm:px-6 lg:px-8">
+    <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto">
+            <h1 class="text-base font-semibold leading-6 text-gray-900">Printers</h1>
+            <p class="mt-2 text-sm text-gray-700">IPP printers available for automated print jobs.</p>
+        </div>
+    </div>
+
+    {{ if .Notice }}
+    <div class="mt-6 rounded-md bg-green-50 p-4 text-sm text-green-700">{{ .Notice }}</div>
+    {{ end }}
+    {{ if .Error }}
+    <div class="mt-6 rounded-md bg-red-50 p-4 text-sm text-red-700">{{ .Error }}</div>
+    {{ end }}
+
+    <div class="mt-8 flex items-center gap-3">
+        <form action="/printers/discover" method="POST" hx-post="/printers/discover" hx-target="#page-content" hx-swap="innerHTML">
+            <button type="submit" class="rounded-md bg-gray-800 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-700">Discover printers</button>
+        </form>
+    </div>
+
+    {{ if .Discovered }}
+    <div class="mt-6 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+        <table class="min-w-full divide-y divide-gray-300">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Discovered printer</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">URI</th>
+                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Add</span></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+                {{ range .Discovered }}
+                <tr>
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">{{ .Name }}<div class="text-gray-500">{{ .Host }}:{{ .Port }}</div></td>
+                    <td class="px-3 py-4 text-sm text-gray-500">{{ .URI }}</td>
+                    <td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        <form action="/printers" method="POST" hx-post="/printers" hx-target="#page-content" hx-swap="innerHTML">
+                            <input type="hidden" name="name" value="{{ .Name }}">
+                            <input type="hidden" name="host" value="{{ .Host }}">
+                            <input type="hidden" name="port" value="{{ .Port }}">
+                            <input type="hidden" name="uri" value="{{ .URI }}">
+                            <button type="submit" class="text-gray-800 hover:text-gray-600">Add</button>
+                        </form>
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+    {{ end }}
+
+    <div class="mt-8 flow-root">
+        <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Name</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Host</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Port</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">URI</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Default</th>
+                                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            {{ range .Printers }}
+                            <tr>
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">{{ .Name }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .Host }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .Port }}</td>
+                                <td class="px-3 py-4 text-sm text-gray-500">{{ .URI }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ if .IsDefault }}Yes{{ else }}No{{ end }}</td>
+                                <td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                    {{ if not .IsDefault }}
+                                    <form action="/printers/{{ .ID }}/default" method="POST" hx-post="/printers/{{ .ID }}/default" hx-target="#page-content" hx-swap="innerHTML">
+                                        <button type="submit" class="text-gray-800 hover:text-gray-600">Set default</button>
+                                    </form>
+                                    {{ end }}
+                                </td>
+                            </tr>
+                            {{ else }}
+                            <tr>
+                                <td colspan="6" class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 text-center text-gray-500">
+                                    No printers discovered yet.
+                                </td>
+                            </tr>
+                            {{ end }}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
