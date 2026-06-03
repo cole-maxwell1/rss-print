@@ -100,7 +100,11 @@ func (h *DashboardHandler) HandleDownloadPDF(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	pdfBytes, err := services.GenerateArticlePDF(article.Title, article.URL)
+	pdfBytes, err := services.BuildArticlePDF(r.Context(), article.Title, article.URL, article.Content, func(content string) {
+		if uerr := h.Articles.UpdateContent(article.ID, content); uerr != nil {
+			log.Printf("failed to backfill content for article %d: %v", article.ID, uerr)
+		}
+	})
 	if err != nil {
 		log.Printf("failed to generate article pdf: %v", err)
 		http.Error(w, "Could not generate PDF", http.StatusInternalServerError)

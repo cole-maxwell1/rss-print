@@ -180,10 +180,11 @@ func importFeedArticles(articles *repositories.ArticleRepo, feedID int64, parsed
 		}
 
 		article := &models.Article{
-			FeedID: feedID,
-			GUID:   guid,
-			Title:  strings.TrimSpace(item.Title),
-			URL:    strings.TrimSpace(item.Link),
+			FeedID:  feedID,
+			GUID:    guid,
+			Title:   strings.TrimSpace(item.Title),
+			URL:     strings.TrimSpace(item.Link),
+			Content: services.FeedItemContent(item),
 		}
 		if article.Title == "" {
 			article.Title = article.URL

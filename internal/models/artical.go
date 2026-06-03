@@ -9,6 +9,7 @@ type Article struct {
 	GUID        string    `xorm:"notnull unique(feed_guid) 'guid'"` // Prevent duplicates per feed
 	Title       string    `xorm:"notnull 'title'"`
 	URL         string    `xorm:"'url'"`
+	Content     string    `xorm:"text 'content'"` // Cleaned article HTML (paragraphs, figures, links) used for PDF rendering
 	PublishedAt time.Time `xorm:"'published_at'"`
 	CreatedAt   time.Time `xorm:"created 'created_at'"`
 }

@@ -8,325 +8,350 @@
  * the dark: variant in markup.
  */
 @theme {
-  /* Brand accents */
-  --color-primary: #003f7f;   /* brand blue */
-  --color-secondary: #222222; /* brand charcoal, used for neutral/low-emphasis actions */
-  --color-info: #336da6;      /* lighter blue derived from primary */
-  --color-warn: #f2b134;      /* brand gold */
-  --color-danger: #d52b1e;    /* brand red */
-  --color-success: #2e7d46;   /* not a brand color; required for success states */
+    /* Brand accents */
+    --color-primary: #003f7f; /* brand blue */
+    --color-secondary: #222222; /* brand charcoal, used for neutral/low-emphasis actions */
+    --color-info: #336da6; /* lighter blue derived from primary */
+    --color-warn: #f2b134; /* brand gold */
+    --color-danger: #d52b1e; /* brand red */
+    --color-success: #2e7d46; /* not a brand color; required for success states */
 
-  /* Surface ramp (light mode defaults) — warm neutral, cream page tint */
-  --color-surface-0: #ffffff;   /* card / panel background */
-  --color-surface-50: #ede8d0;  /* brand cream, page background */
-  --color-surface-100: #e2ddca; /* table header, subtle fills */
-  --color-surface-200: #d4cfbc; /* dividers, hairline borders */
-  --color-surface-300: #b9b3a1; /* input rings, stronger borders */
-  --color-surface-400: #918b7a; /* disabled text, placeholders */
-  --color-surface-500: #6f6a5c; /* muted text */
-  --color-surface-600: #56524a; /* secondary text */
-  --color-surface-700: #403d37; /* body text */
-  --color-surface-800: #2e2c28; /* strong text */
-  --color-surface-900: #222222; /* brand charcoal, headings */
-  --color-surface-950: #161616; /* highest contrast */
+    /* Surface ramp (light mode defaults) — warm neutral, cream page tint */
+    --color-surface-0: #ffffff; /* card / panel background */
+    --color-surface-50: #ede8d0; /* brand cream, page background */
+    --color-surface-100: #e2ddca; /* table header, subtle fills */
+    --color-surface-200: #d4cfbc; /* dividers, hairline borders */
+    --color-surface-300: #b9b3a1; /* input rings, stronger borders */
+    --color-surface-400: #918b7a; /* disabled text, placeholders */
+    --color-surface-500: #6f6a5c; /* muted text */
+    --color-surface-600: #56524a; /* secondary text */
+    --color-surface-700: #403d37; /* body text */
+    --color-surface-800: #2e2c28; /* strong text */
+    --color-surface-900: #222222; /* brand charcoal, headings */
+    --color-surface-950: #161616; /* highest contrast */
 
-  /* Brand fonts (self-hosted; see @font-face below) */
-  --font-sans: 'Work Sans', system-ui, sans-serif;
-  --font-display: 'Poppins', 'Work Sans', sans-serif;
+    /* Brand fonts (self-hosted; see @font-face below) */
+    --font-sans: "Work Sans", system-ui, sans-serif;
+    --font-display: "Poppins", "Work Sans", sans-serif;
 }
 
 @layer base {
-  /* Body text substitute for the brand Gotham */
-  @font-face {
-    font-family: 'Work Sans';
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src: url('/static/fonts/work-sans-400.woff2') format('woff2');
-  }
-  @font-face {
-    font-family: 'Work Sans';
-    font-style: normal;
-    font-weight: 500;
-    font-display: swap;
-    src: url('/static/fonts/work-sans-500.woff2') format('woff2');
-  }
-  @font-face {
-    font-family: 'Work Sans';
-    font-style: normal;
-    font-weight: 600;
-    font-display: swap;
-    src: url('/static/fonts/work-sans-600.woff2') format('woff2');
-  }
+    /* Body text substitute for the brand Gotham */
+    @font-face {
+        font-family: "Work Sans";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("/static/fonts/work-sans-400.woff2") format("woff2");
+    }
+    @font-face {
+        font-family: "Work Sans";
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+        src: url("/static/fonts/work-sans-500.woff2") format("woff2");
+    }
+    @font-face {
+        font-family: "Work Sans";
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+        src: url("/static/fonts/work-sans-600.woff2") format("woff2");
+    }
 
-  /* Display substitute for the brand Chillout */
-  @font-face {
-    font-family: 'Poppins';
-    font-style: normal;
-    font-weight: 600;
-    font-display: swap;
-    src: url('/static/fonts/poppins-600.woff2') format('woff2');
-  }
-  @font-face {
-    font-family: 'Poppins';
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-    src: url('/static/fonts/poppins-700.woff2') format('woff2');
-  }
+    /* Display substitute for the brand Chillout */
+    @font-face {
+        font-family: "Poppins";
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+        src: url("/static/fonts/poppins-600.woff2") format("woff2");
+    }
+    @font-face {
+        font-family: "Poppins";
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+        src: url("/static/fonts/poppins-700.woff2") format("woff2");
+    }
 
-  /* Document defaults */
-  :root {
-    background-color: var(--color-surface-50);
-    color: var(--color-surface-900);
-    font-family: var(--font-sans);
-  }
-
-  /* Automatic dark mode: reassign the surface ramp, accents stay constant */
-  @media (prefers-color-scheme: dark) {
+    /* Document defaults */
     :root {
-      --color-surface-0: #1a1a1a;
-      --color-surface-50: #161616;
-      --color-surface-100: #222222; /* brand charcoal */
-      --color-surface-200: #2e2c28;
-      --color-surface-300: #403d37;
-      --color-surface-400: #56524a;
-      --color-surface-500: #6f6a5c;
-      --color-surface-600: #918b7a;
-      --color-surface-700: #b9b3a1;
-      --color-surface-800: #d4cfbc;
-      --color-surface-900: #e2ddca;
-      --color-surface-950: #ede8d0; /* brand cream */
+        background-color: var(--color-surface-50);
+        color: var(--color-surface-900);
+        font-family: var(--font-sans);
     }
-  }
 
-  /* Typography */
-  h1, h2, h3, h4, h5, h6 {
-    color: var(--color-surface-950);
-    font-family: var(--font-display);
-    font-weight: 600;
-    margin-bottom: 1rem;
-    line-height: 1.2;
-  }
-  h1 { font-size: 2.5rem; }
-  h2 { font-size: 2rem; }
-  h3 { font-size: 1.75rem; }
-  h4 { font-size: 1.5rem; }
-  h5 { font-size: 1.25rem; }
-  h6 { font-size: 1rem; }
+    /* Automatic dark mode: reassign the surface ramp, accents stay constant */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --color-surface-0: #1a1a1a;
+            --color-surface-50: #161616;
+            --color-surface-100: #222222; /* brand charcoal */
+            --color-surface-200: #2e2c28;
+            --color-surface-300: #403d37;
+            --color-surface-400: #56524a;
+            --color-surface-500: #6f6a5c;
+            --color-surface-600: #918b7a;
+            --color-surface-700: #b9b3a1;
+            --color-surface-800: #d4cfbc;
+            --color-surface-900: #e2ddca;
+            --color-surface-950: #ede8d0; /* brand cream */
+        }
+    }
 
-  p {
-    margin-bottom: 1rem;
-    line-height: 1.5;
-  }
+    /* Typography */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        color: var(--color-surface-950);
+        font-family: var(--font-display);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+    h1 {
+        font-size: 2.5rem;
+    }
+    h2 {
+        font-size: 2rem;
+    }
+    h3 {
+        font-size: 1.75rem;
+    }
+    h4 {
+        font-size: 1.5rem;
+    }
+    h5 {
+        font-size: 1.25rem;
+    }
+    h6 {
+        font-size: 1rem;
+    }
 
-  /* Tables */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: var(--color-surface-0);
-    border-radius: 0.5rem;
-    overflow: hidden;
-  }
-  th {
-    background-color: var(--color-surface-100);
-    color: var(--color-surface-950);
-    font-weight: 600;
-    text-align: start;
-    padding: 1rem;
-    border-bottom: 2px solid var(--color-surface-200);
-  }
-  td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--color-surface-200);
-    color: var(--color-surface-800);
-  }
-  tr:last-child td {
-    border-bottom: none;
-  }
+    p {
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
 
-  /* ---- Forms: native controls styled bare (zero classes in markup) ---- */
+    /* Tables */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: var(--color-surface-0);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    th {
+        background-color: var(--color-surface-100);
+        color: var(--color-surface-950);
+        font-weight: 600;
+        text-align: start;
+        padding: 1rem;
+        border-bottom: 2px solid var(--color-surface-200);
+    }
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--color-surface-200);
+        color: var(--color-surface-800);
+    }
+    tr:last-child td {
+        border-bottom: none;
+    }
 
-  /* Text-like inputs, selects, textareas share one box. Enumerate input
+    /* ---- Forms: native controls styled bare (zero classes in markup) ---- */
+
+    /* Text-like inputs, selects, textareas share one box. Enumerate input
      types so checkbox/radio/hidden/submit/file are NOT captured. */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="url"],
-  input[type="number"],
-  input[type="search"],
-  input[type="tel"],
-  select,
-  textarea {
-    display: block;
-    width: 100%;
-    margin-block-start: 0.5rem;   /* bakes in the per-field mt-2 */
-    padding-block: 0.5rem;        /* unified on feeds px-3 py-2   */
-    padding-inline: 0.75rem;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    color: var(--color-surface-900);
-    background-color: var(--color-surface-0);
-    border: 1px solid var(--color-surface-300);   /* replaces ring-1 ring-inset */
-    border-radius: 0.375rem;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    appearance: none;
-  }
-
-  input::placeholder,
-  textarea::placeholder {
-    color: var(--color-surface-400);
-  }
-
-  input[type="text"]:hover,
-  input[type="email"]:hover,
-  input[type="password"]:hover,
-  input[type="url"]:hover,
-  input[type="number"]:hover,
-  input[type="search"]:hover,
-  input[type="tel"]:hover,
-  select:hover,
-  textarea:hover {
-    border-color: var(--color-surface-400);
-  }
-
-  /* Keyboard-accessible focus: a real outline (renders in forced-colors
-     mode); :focus-visible shows on tab but not on mouse click. */
-  input[type="text"]:focus-visible,
-  input[type="email"]:focus-visible,
-  input[type="password"]:focus-visible,
-  input[type="url"]:focus-visible,
-  input[type="number"]:focus-visible,
-  input[type="search"]:focus-visible,
-  input[type="tel"]:focus-visible,
-  select:focus-visible,
-  textarea:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-    border-color: var(--color-primary);
-  }
-
-  input:disabled,
-  select:disabled,
-  textarea:disabled {
-    background-color: var(--color-surface-100);
-    color: var(--color-surface-400);
-    cursor: not-allowed;
-  }
-
-  /* Labels bare (was: block text-sm font-medium leading-6) */
-  label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1.5rem;
-  }
-
-  /* Checkbox/radio: native control tinted with the brand color; keeps full
-     keyboard and screen-reader behavior, no custom widget. */
-  input[type="checkbox"],
-  input[type="radio"] {
-    accent-color: var(--color-primary);
-    inline-size: 1rem;
-    block-size: 1rem;
-  }
-  input[type="checkbox"]:focus-visible,
-  input[type="radio"]:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    input, select, textarea, button, a {
-      transition: none;
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="url"],
+    input[type="number"],
+    input[type="search"],
+    input[type="tel"],
+    select,
+    textarea {
+        display: block;
+        width: 100%;
+        margin-block-start: 0.5rem; /* bakes in the per-field mt-2 */
+        padding-block: 0.5rem; /* unified on feeds px-3 py-2   */
+        padding-inline: 0.75rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        color: var(--color-surface-900);
+        background-color: var(--color-surface-0);
+        border: 1px solid var(--color-surface-300); /* replaces ring-1 ring-inset */
+        border-radius: 0.375rem;
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        appearance: none;
     }
-  }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--color-surface-400);
+    }
+
+    input[type="text"]:hover,
+    input[type="email"]:hover,
+    input[type="password"]:hover,
+    input[type="url"]:hover,
+    input[type="number"]:hover,
+    input[type="search"]:hover,
+    input[type="tel"]:hover,
+    select:hover,
+    textarea:hover {
+        border-color: var(--color-surface-400);
+    }
+
+    /* Keyboard-accessible focus: a real outline (renders in forced-colors
+     mode); :focus-visible shows on tab but not on mouse click. */
+    input[type="text"]:focus-visible,
+    input[type="email"]:focus-visible,
+    input[type="password"]:focus-visible,
+    input[type="url"]:focus-visible,
+    input[type="number"]:focus-visible,
+    input[type="search"]:focus-visible,
+    input[type="tel"]:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+        border-color: var(--color-primary);
+    }
+
+    input:disabled,
+    select:disabled,
+    textarea:disabled {
+        background-color: var(--color-surface-100);
+        color: var(--color-surface-400);
+        cursor: not-allowed;
+    }
+
+    /* Labels bare (was: block text-sm font-medium leading-6) */
+    label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        line-height: 1.5rem;
+    }
+
+    /* Checkbox/radio: native control tinted with the brand color; keeps full
+     keyboard and screen-reader behavior, no custom widget. */
+    input[type="checkbox"],
+    input[type="radio"] {
+        accent-color: var(--color-primary);
+        inline-size: 1rem;
+        block-size: 1rem;
+    }
+    input[type="checkbox"]:focus-visible,
+    input[type="radio"]:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        input,
+        select,
+        textarea,
+        button,
+        a {
+            transition: none;
+        }
+    }
 }
 
 @layer components {
-  /* ---- Buttons ----
+    /* ---- Buttons ----
      The bare <button> tag is reused for primary, link, and nav variants,
      so there is no blanket button{} rule; each button carries one semantic
      class. */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border: 0;
-    border-radius: 0.375rem;
-    padding-block: 0.5rem;
-    padding-inline: 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    line-height: 1.25rem;
-    cursor: pointer;
-    text-decoration: none;   /* lets an <a> share .btn */
-  }
-  .btn:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-  .btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: 0;
+        border-radius: 0.375rem;
+        padding-block: 0.5rem;
+        padding-inline: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1.25rem;
+        cursor: pointer;
+        text-decoration: none; /* lets an <a> share .btn */
+    }
+    .btn:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 
-  /* Solid primary CTA: Sign in, Add feed, Print, Discover printers */
-  .btn-primary {
-    background-color: var(--color-primary);
-    color: #ffffff;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  }
-  .btn-primary:hover {
-    background-color: color-mix(in srgb, var(--color-primary) 90%, transparent);
-  }
+    /* Solid primary CTA: Sign in, Add feed, Print, Discover printers */
+    .btn-primary {
+        background-color: var(--color-primary);
+        color: #ffffff;
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+    .btn-primary:hover {
+        background-color: color-mix(
+            in srgb,
+            var(--color-primary) 90%,
+            transparent
+        );
+    }
 
-  /* Text/link action: Retry, Add, Set default */
-  .btn-link {
-    background: transparent;
-    color: var(--color-primary);
-    padding: 0;
-    font-weight: 500;
-  }
-  .btn-link:hover {
-    color: color-mix(in srgb, var(--color-primary) 80%, transparent);
-    text-decoration: underline;   /* non-color hover cue (WCAG 1.4.1) */
-  }
-  .btn-link:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-    border-radius: 0.125rem;
-  }
+    /* Text/link action: Retry, Add, Set default */
+    .btn-link {
+        background: transparent;
+        color: var(--color-primary);
+        padding: 0;
+        font-weight: 500;
+    }
+    .btn-link:hover {
+        color: color-mix(in srgb, var(--color-primary) 80%, transparent);
+        text-decoration: underline; /* non-color hover cue (WCAG 1.4.1) */
+    }
+    .btn-link:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+        border-radius: 0.125rem;
+    }
 
-  /* ---- Navbar links + logout on the dark secondary bar ----
+    /* ---- Navbar links + logout on the dark secondary bar ----
      Literal white values (not surface vars): the navbar is bg-secondary
      charcoal in both light and dark mode, so it stays light-on-dark. */
-  .nav-link {
-    display: inline-block;
-    border-radius: 0.375rem;
-    padding-block: 0.5rem;
-    padding-inline: 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: rgb(255 255 255 / 0.7);
-    text-decoration: none;
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .nav-link:hover {
-    background-color: rgb(255 255 255 / 0.1);
-    color: #ffffff;
-  }
-  .nav-link:focus-visible {
-    outline: 2px solid #ffffff;
-    outline-offset: 2px;
-  }
-  /* Active state driven by the attribute, not a Go-conditional utility blob */
-  .nav-link[aria-current="page"] {
-    background-color: rgb(0 0 0 / 0.3);
-    color: #ffffff;
-  }
+    .nav-link {
+        display: inline-block;
+        border-radius: 0.375rem;
+        padding-block: 0.5rem;
+        padding-inline: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: rgb(255 255 255 / 0.7);
+        text-decoration: none;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .nav-link:hover {
+        background-color: rgb(255 255 255 / 0.1);
+        color: #ffffff;
+    }
+    .nav-link:focus-visible {
+        outline: 2px solid #ffffff;
+        outline-offset: 2px;
+    }
+    /* Active state driven by the attribute, not a Go-conditional utility blob */
+    .nav-link[aria-current="page"] {
+        background-color: rgb(0 0 0 / 0.3);
+        color: #ffffff;
+    }
 }

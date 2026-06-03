@@ -32,6 +32,14 @@ func (r *ArticleRepo) Create(article *models.Article) error {
 	return err
 }
 
+// UpdateContent stores the cleaned article HTML for an existing article. Used to
+// backfill content onto rows that predate content capture, or were created before
+// extraction succeeded.
+func (r *ArticleRepo) UpdateContent(id int64, content string) error {
+	_, err := r.engine.ID(id).Cols("content").Update(&models.Article{Content: content})
+	return err
+}
+
 // ListRecent returns the most recent articles, newest first, up to limit.
 func (r *ArticleRepo) ListRecent(limit int) ([]models.Article, error) {
 	var articles []models.Article

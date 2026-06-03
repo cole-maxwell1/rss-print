@@ -87,10 +87,11 @@ func (w *Worker) processFeed(feed models.Feed) {
 		}
 
 		article := &models.Article{
-			FeedID: feed.ID,
-			GUID:   guid,
-			Title:  item.Title,
-			URL:    item.Link,
+			FeedID:  feed.ID,
+			GUID:    guid,
+			Title:   item.Title,
+			URL:     item.Link,
+			Content: services.FeedItemContent(item),
 		}
 
 		if item.PublishedParsed != nil {
@@ -156,7 +157,11 @@ func (w *Worker) executeJob(job *models.PrintJob) {
 	}
 
 	// 1. Generate PDF
-	pdfBytes, err := services.GenerateArticlePDF(article.Title, article.URL)
+	pdfBytes, err := services.BuildArticlePDF(context.Background(), article.Title, article.URL, article.Content, func(content string) {
+		if uerr := w.Articles.UpdateContent(article.ID, content); uerr != nil {
+			log.Printf("Failed to backfill content for article %d: %v", article.ID, uerr)
+		}
+	})
 	if err != nil {
 		log.Printf("Failed to generate PDF for job %d: %v", job.ID, err)
 		w.markJobFailed(job, err.Error())
