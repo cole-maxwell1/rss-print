@@ -9,6 +9,7 @@ import (
 	"rss-print/internal/middleware"
 	"rss-print/internal/models"
 	"rss-print/internal/repositories"
+	"rss-print/internal/services"
 )
 
 type PrintJobView struct {
@@ -84,6 +85,33 @@ func (h *DashboardHandler) HandleCreatePrint(w http.ResponseWriter, r *http.Requ
 	}
 
 	h.renderDashboardWithMessage(w, r, "Print job queued", "")
+}
+
+func (h *DashboardHandler) HandleDownloadPDF(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id <= 0 {
+		http.Error(w, "Invalid article", http.StatusBadRequest)
+		return
+	}
+
+	article, has, err := h.Articles.GetByID(id)
+	if err != nil || !has {
+		http.Error(w, "Article not found", http.StatusNotFound)
+		return
+	}
+
+	pdfBytes, err := services.GenerateArticlePDF(article.Title, article.URL)
+	if err != nil {
+		log.Printf("failed to generate article pdf: %v", err)
+		http.Error(w, "Could not generate PDF", http.StatusInternalServerError)
+		return
+	}
+
+	filename := pdfFilename(article.Title)
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", `inline; filename="`+filename+`"`)
+	w.Header().Set("Content-Length", strconv.Itoa(len(pdfBytes)))
+	w.Write(pdfBytes)
 }
 
 func (h *DashboardHandler) HandleRetryPrint(w http.ResponseWriter, r *http.Request) {

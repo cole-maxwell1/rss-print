@@ -11,6 +11,14 @@ import (
 	"rss-print/ui"
 )
 
+// GenerateArticlePDF builds the PDF that gets sent to the printer for an
+// article. Both the print worker and the dashboard download handler use this
+// so the downloaded file matches what is printed.
+func GenerateArticlePDF(title, url string) ([]byte, error) {
+	content := "Original URL: " + url
+	return GeneratePDF(title, content)
+}
+
 // GeneratePDF creates a simple PDF document from article text
 func GeneratePDF(title, content string) ([]byte, error) {
 	pdf := gopdf.GoPdf{}

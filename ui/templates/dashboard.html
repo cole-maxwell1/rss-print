@@ -152,7 +152,7 @@
                                     scope="col"
                                     class="relative py-3.5 pl-3 pr-4 sm:pr-6"
                                 >
-                                    <span class="sr-only">Print</span>
+                                    <span class="sr-only">Download</span>
                                 </th>
                             </tr>
                         </thead>
@@ -190,7 +190,15 @@
                                         <button type="submit" class="btn btn-primary">Print</button>
                                     </form>
                                 </td>
-                                <td></td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-end">
+                                    <a
+                                        href="/articles/{{ .ID }}/pdf"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="btn btn-link"
+                                        >Download</a
+                                    >
+                                </td>
                             </tr>
                             {{ else }}
                             <tr>

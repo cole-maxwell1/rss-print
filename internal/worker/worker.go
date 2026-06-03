@@ -156,11 +156,7 @@ func (w *Worker) executeJob(job *models.PrintJob) {
 	}
 
 	// 1. Generate PDF
-	// We don't save full article content to DB currently to save space,
-	// so for this MVP we just print the Title and URL.
-	// A full implementation might fetch the content from DB if we saved it in processFeed.
-	pdfContent := "Original URL: " + article.URL
-	pdfBytes, err := services.GeneratePDF(article.Title, pdfContent)
+	pdfBytes, err := services.GenerateArticlePDF(article.Title, article.URL)
 	if err != nil {
 		log.Printf("Failed to generate PDF for job %d: %v", job.ID, err)
 		w.markJobFailed(job, err.Error())

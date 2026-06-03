@@ -86,6 +86,7 @@ func main() {
 	mux.HandleFunc("GET /", middleware.AuthMiddleware(userRepo, dashH.Render))
 	mux.HandleFunc("POST /prints", middleware.AuthMiddleware(userRepo, dashH.HandleCreatePrint))
 	mux.HandleFunc("POST /prints/{id}/retry", middleware.AuthMiddleware(userRepo, dashH.HandleRetryPrint))
+	mux.HandleFunc("GET /articles/{id}/pdf", middleware.AuthMiddleware(userRepo, dashH.HandleDownloadPDF))
 	mux.HandleFunc("GET /feed", middleware.AuthMiddleware(userRepo, feedH.Render))
 	mux.HandleFunc("GET /feeds", middleware.AuthMiddleware(userRepo, feedH.Render))
 	mux.HandleFunc("POST /feeds", middleware.AuthMiddleware(userRepo, feedH.HandleCreate))
