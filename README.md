@@ -5,12 +5,12 @@ A self-hosted, Docker-ready Go web application that polls RSS feeds and automati
 Built completely independent of CUPS, using a pure-Go tech stack.
 
 ## Tech Stack
-- **Backend:** Go 1.22+ (net/http router)
+- **Backend:** Go 1.26+ (net/http router)
 - **Frontend:** HTMX, Tailwind CSS, Go `html/template`
 - **Database:** Pure-Go SQLite (`modernc.org/sqlite`)
 - **Printer Discovery:** mDNS / Bonjour (`zeroconf`)
 - **PDF Generation:** Pure-Go PDF lib (`gopdf`)
-- **Printing:** Raw IPP (`goipp`)
+- **Printing:** Raw IPP (`github.com/phin1x/go-ipp`)
 
 ## Features
 - Add RSS feeds with configurable polling intervals.
@@ -51,7 +51,7 @@ On first run, the server will automatically create a default admin user:
 Please change this password or add a new user and delete the admin immediately after logging in.
 
 ## Build from Source (Local)
-Requires Go 1.22+.
+Requires Go 1.26+.
 
 ```bash
 make all

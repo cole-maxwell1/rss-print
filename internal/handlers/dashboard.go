@@ -8,8 +8,7 @@ import (
 
 	"rss-print/internal/middleware"
 	"rss-print/internal/models"
-
-	"xorm.io/xorm"
+	"rss-print/internal/repositories"
 )
 
 type PrintJobView struct {
@@ -20,8 +19,17 @@ type PrintJobView struct {
 
 // DashboardHandler renders the main dashboard
 type DashboardHandler struct {
-	DB   *xorm.Engine
-	Tmpl *template.Template
+	Articles *repositories.ArticleRepo
+	Printers *repositories.PrinterRepo
+	Jobs     *repositories.PrintJobRepo
+	Tmpl     *template.Template
+}
+
+type dashboardPageData struct {
+	pageData
+	Jobs     []PrintJobView
+	Articles []models.Article
+	Printers []models.Printer
 }
 
 func (h *DashboardHandler) Render(w http.ResponseWriter, r *http.Request) {
@@ -49,8 +57,7 @@ func (h *DashboardHandler) HandleCreatePrint(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var article models.Article
-	has, err := h.DB.ID(articleID).Get(&article)
+	_, has, err := h.Articles.GetByID(articleID)
 	if err != nil || !has {
 		h.renderDashboardWithMessage(w, r, "", "Article not found")
 		return
@@ -62,8 +69,7 @@ func (h *DashboardHandler) HandleCreatePrint(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if printerID > 0 {
-		var printer models.Printer
-		has, err := h.DB.ID(printerID).Get(&printer)
+		_, has, err := h.Printers.GetByID(printerID)
 		if err != nil || !has {
 			h.renderDashboardWithMessage(w, r, "", "Printer not found")
 			return
@@ -71,7 +77,7 @@ func (h *DashboardHandler) HandleCreatePrint(w http.ResponseWriter, r *http.Requ
 	}
 
 	job := &models.PrintJob{ArticleID: articleID, PrinterID: printerID, Status: "Pending"}
-	if _, err := h.DB.Insert(job); err != nil {
+	if err := h.Jobs.Create(job); err != nil {
 		log.Printf("failed to create print job: %v", err)
 		h.renderDashboardWithMessage(w, r, "", "Could not queue print job")
 		return
@@ -87,8 +93,7 @@ func (h *DashboardHandler) HandleRetryPrint(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var job models.PrintJob
-	has, err := h.DB.ID(id).Get(&job)
+	job, has, err := h.Jobs.GetByID(id)
 	if err != nil || !has {
 		h.renderDashboardWithMessage(w, r, "", "Print job not found")
 		return
@@ -100,7 +105,7 @@ func (h *DashboardHandler) HandleRetryPrint(w http.ResponseWriter, r *http.Reque
 
 	job.Status = "Pending"
 	job.LastError = ""
-	if _, err := h.DB.ID(job.ID).Cols("status", "last_error", "updated_at").Update(&job); err != nil {
+	if err := h.Jobs.UpdateStatus(job); err != nil {
 		log.Printf("failed to retry print job: %v", err)
 		h.renderDashboardWithMessage(w, r, "", "Could not retry print job")
 		return
@@ -122,39 +127,45 @@ func (h *DashboardHandler) renderDashboardWithMessage(w http.ResponseWriter, r *
 	}
 }
 
-func (h *DashboardHandler) dashboardData(r *http.Request, notice string, formError string) (map[string]any, error) {
-	var jobs []models.PrintJob
-	if err := h.DB.OrderBy("created_at DESC").Limit(10).Find(&jobs); err != nil {
-		return nil, err
+func (h *DashboardHandler) dashboardData(r *http.Request, notice string, formError string) (dashboardPageData, error) {
+	jobs, err := h.Jobs.ListRecent(10)
+	if err != nil {
+		return dashboardPageData{}, err
 	}
 
 	jobViews := make([]PrintJobView, 0, len(jobs))
 	for _, job := range jobs {
 		view := PrintJobView{Job: job}
-		_, _ = h.DB.ID(job.ArticleID).Get(&view.Article)
+		if article, has, _ := h.Articles.GetByID(job.ArticleID); has {
+			view.Article = *article
+		}
 		if job.PrinterID > 0 {
-			_, _ = h.DB.ID(job.PrinterID).Get(&view.Printer)
+			if printer, has, _ := h.Printers.GetByID(job.PrinterID); has {
+				view.Printer = *printer
+			}
 		}
 		jobViews = append(jobViews, view)
 	}
 
-	var articles []models.Article
-	if err := h.DB.OrderBy("created_at DESC").Limit(10).Find(&articles); err != nil {
-		return nil, err
+	articles, err := h.Articles.ListRecent(10)
+	if err != nil {
+		return dashboardPageData{}, err
 	}
 
-	var printers []models.Printer
-	if err := h.DB.OrderBy("is_default DESC, name ASC").Find(&printers); err != nil {
-		return nil, err
+	printers, err := h.Printers.List()
+	if err != nil {
+		return dashboardPageData{}, err
 	}
 
-	return map[string]any{
-		"User":     middleware.GetUser(r.Context()),
-		"Path":     "/",
-		"Notice":   notice,
-		"Error":    formError,
-		"Jobs":     jobViews,
-		"Articles": articles,
-		"Printers": printers,
+	return dashboardPageData{
+		pageData: pageData{
+			User:   middleware.GetUser(r.Context()),
+			Path:   "/",
+			Notice: notice,
+			Error:  formError,
+		},
+		Jobs:     jobViews,
+		Articles: articles,
+		Printers: printers,
 	}, nil
 }

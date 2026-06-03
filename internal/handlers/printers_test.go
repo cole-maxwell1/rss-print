@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	"rss-print/internal/models"
+	"rss-print/internal/repositories"
 )
 
 func TestPrinterCreateUpsertsByURI(t *testing.T) {
 	engine := testDB(t)
-	handler := &PrinterHandler{DB: engine, Tmpl: testTemplate(t, "templates/printers.html")}
+	handler := &PrinterHandler{Printers: repositories.NewPrinterRepo(engine), Tmpl: testTemplate(t, "templates/printers.html")}
 
 	handler.HandleCreate(httptest.NewRecorder(), testFormRequest(t, "/printers", url.Values{
 		"name": {"Office"}, "host": {"printer.local"}, "port": {"631"}, "uri": {"ipp://printer.local/ipp/print"},
@@ -44,7 +45,7 @@ func TestPrinterSetDefaultClearsOtherDefaults(t *testing.T) {
 	if _, err := engine.Insert(first, second); err != nil {
 		t.Fatal(err)
 	}
-	handler := &PrinterHandler{DB: engine, Tmpl: testTemplate(t, "templates/printers.html")}
+	handler := &PrinterHandler{Printers: repositories.NewPrinterRepo(engine), Tmpl: testTemplate(t, "templates/printers.html")}
 
 	req := testFormRequest(t, "/printers/2/default", nil)
 	req.SetPathValue("id", "2")

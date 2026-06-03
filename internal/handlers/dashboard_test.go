@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"rss-print/internal/models"
+	"rss-print/internal/repositories"
 )
 
 func TestManualPrintCreatesPendingJob(t *testing.T) {
@@ -15,7 +16,12 @@ func TestManualPrintCreatesPendingJob(t *testing.T) {
 	if _, err := engine.Insert(article, printer); err != nil {
 		t.Fatal(err)
 	}
-	handler := &DashboardHandler{DB: engine, Tmpl: testTemplate(t, "templates/dashboard.html")}
+	handler := &DashboardHandler{
+		Articles: repositories.NewArticleRepo(engine),
+		Printers: repositories.NewPrinterRepo(engine),
+		Jobs:     repositories.NewPrintJobRepo(engine),
+		Tmpl:     testTemplate(t, "templates/dashboard.html"),
+	}
 
 	req := testFormRequest(t, "/prints", url.Values{
 		"article_id": {strconvFormat(article.ID)},

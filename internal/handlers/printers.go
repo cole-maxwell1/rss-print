@@ -12,18 +12,23 @@ import (
 
 	"rss-print/internal/middleware"
 	"rss-print/internal/models"
+	"rss-print/internal/repositories"
 	"rss-print/internal/services"
-
-	"xorm.io/xorm"
 )
 
 type PrinterDiscoverer func(context.Context) ([]models.Printer, error)
 
 // PrinterHandler renders the printer list page.
 type PrinterHandler struct {
-	DB               *xorm.Engine
+	Printers         *repositories.PrinterRepo
 	Tmpl             *template.Template
 	DiscoverPrinters PrinterDiscoverer
+}
+
+type printersPageData struct {
+	pageData
+	Printers   []models.Printer
+	Discovered []models.Printer
 }
 
 func (h *PrinterHandler) Render(w http.ResponseWriter, r *http.Request) {
@@ -72,15 +77,14 @@ func (h *PrinterHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	count, err := h.DB.Count(new(models.Printer))
+	count, err := h.Printers.Count()
 	if err != nil {
 		log.Printf("failed to count printers: %v", err)
 		h.renderPrintersWithMessage(w, r, "", "Could not save printer", nil)
 		return
 	}
 
-	var existing models.Printer
-	has, err := h.DB.Where("uri = ?", uri).Get(&existing)
+	existing, has, err := h.Printers.GetByURI(uri)
 	if err != nil {
 		log.Printf("failed to find printer: %v", err)
 		h.renderPrintersWithMessage(w, r, "", "Could not save printer", nil)
@@ -91,7 +95,7 @@ func (h *PrinterHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 		existing.Host = host
 		existing.Port = port
 		existing.URI = uri
-		if _, err := h.DB.ID(existing.ID).Cols("name", "host", "port", "uri", "updated_at").Update(&existing); err != nil {
+		if err := h.Printers.UpdateDetails(existing); err != nil {
 			log.Printf("failed to update printer: %v", err)
 			h.renderPrintersWithMessage(w, r, "", "Could not update printer", nil)
 			return
@@ -101,7 +105,7 @@ func (h *PrinterHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	printer := &models.Printer{Name: name, Host: host, Port: port, URI: uri, IsDefault: count == 0}
-	if _, err := h.DB.Insert(printer); err != nil {
+	if err := h.Printers.Create(printer); err != nil {
 		log.Printf("failed to save printer: %v", err)
 		h.renderPrintersWithMessage(w, r, "", "Could not save printer", nil)
 		return
@@ -115,19 +119,12 @@ func (h *PrinterHandler) HandleSetDefault(w http.ResponseWriter, r *http.Request
 		h.renderPrintersWithMessage(w, r, "", "Invalid printer", nil)
 		return
 	}
-	var printer models.Printer
-	has, err := h.DB.ID(id).Get(&printer)
+	printer, has, err := h.Printers.GetByID(id)
 	if err != nil || !has {
 		h.renderPrintersWithMessage(w, r, "", "Printer not found", nil)
 		return
 	}
-	if _, err := h.DB.Exec("UPDATE printer SET is_default = 0"); err != nil {
-		log.Printf("failed to clear default printer: %v", err)
-		h.renderPrintersWithMessage(w, r, "", "Could not set default printer", nil)
-		return
-	}
-	printer.IsDefault = true
-	if _, err := h.DB.ID(printer.ID).Cols("is_default", "updated_at").Update(&printer); err != nil {
+	if err := h.Printers.MakeDefault(printer); err != nil {
 		log.Printf("failed to set default printer: %v", err)
 		h.renderPrintersWithMessage(w, r, "", "Could not set default printer", nil)
 		return
@@ -148,17 +145,19 @@ func (h *PrinterHandler) renderPrintersWithMessage(w http.ResponseWriter, r *htt
 	}
 }
 
-func (h *PrinterHandler) printerData(r *http.Request, notice string, formError string, discovered []models.Printer) (map[string]any, error) {
-	var printers []models.Printer
-	if err := h.DB.OrderBy("is_default DESC, created_at DESC").Find(&printers); err != nil {
-		return nil, err
+func (h *PrinterHandler) printerData(r *http.Request, notice string, formError string, discovered []models.Printer) (printersPageData, error) {
+	printers, err := h.Printers.ListByCreated()
+	if err != nil {
+		return printersPageData{}, err
 	}
-	return map[string]any{
-		"User":       middleware.GetUser(r.Context()),
-		"Path":       "/printers",
-		"Printers":   printers,
-		"Discovered": discovered,
-		"Notice":     notice,
-		"Error":      formError,
+	return printersPageData{
+		pageData: pageData{
+			User:   middleware.GetUser(r.Context()),
+			Path:   "/printers",
+			Notice: notice,
+			Error:  formError,
+		},
+		Printers:   printers,
+		Discovered: discovered,
 	}, nil
 }

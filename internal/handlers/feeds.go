@@ -12,19 +12,27 @@ import (
 
 	"rss-print/internal/middleware"
 	"rss-print/internal/models"
+	"rss-print/internal/repositories"
 	"rss-print/internal/services"
 
 	"github.com/mmcdole/gofeed"
-	"xorm.io/xorm"
 )
 
 type FeedFetcher func(context.Context, string, string, string) (*gofeed.Feed, error)
 
 // FeedHandler renders the feed list page.
 type FeedHandler struct {
-	DB        *xorm.Engine
+	Feeds     *repositories.FeedRepo
+	Printers  *repositories.PrinterRepo
+	Articles  *repositories.ArticleRepo
 	Tmpl      *template.Template
 	FetchFeed FeedFetcher
+}
+
+type feedsPageData struct {
+	pageData
+	Feeds    []models.Feed
+	Printers []models.Printer
 }
 
 func (h *FeedHandler) Render(w http.ResponseWriter, r *http.Request) {
@@ -76,8 +84,7 @@ func (h *FeedHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if printerID > 0 {
-		var printer models.Printer
-		has, err := h.DB.ID(printerID).Get(&printer)
+		_, has, err := h.Printers.GetByID(printerID)
 		if err != nil || !has {
 			h.renderFeedsWithMessage(w, r, "", "Feed printer not found")
 			return
@@ -114,13 +121,13 @@ func (h *FeedHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 		PollInterval:    pollInterval,
 		LastPolledAt:    time.Now(),
 	}
-	if _, err := h.DB.Insert(feed); err != nil {
+	if err := h.Feeds.Create(feed); err != nil {
 		log.Printf("failed to save feed: %v", err)
 		h.renderFeedsWithMessage(w, r, "", "Could not save feed; it may already exist")
 		return
 	}
 
-	imported := importFeedArticles(h.DB, feed.ID, parsedFeed)
+	imported := importFeedArticles(h.Articles, feed.ID, parsedFeed)
 	h.renderFeedsWithMessage(w, r, "Feed added with "+strconv.Itoa(imported)+" current articles imported", "")
 }
 
@@ -137,26 +144,28 @@ func (h *FeedHandler) renderFeedsWithMessage(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (h *FeedHandler) feedData(r *http.Request, notice string, formError string) (map[string]any, error) {
-	var feeds []models.Feed
-	if err := h.DB.OrderBy("created_at DESC").Find(&feeds); err != nil {
-		return nil, err
+func (h *FeedHandler) feedData(r *http.Request, notice string, formError string) (feedsPageData, error) {
+	feeds, err := h.Feeds.List()
+	if err != nil {
+		return feedsPageData{}, err
 	}
-	var printers []models.Printer
-	if err := h.DB.OrderBy("is_default DESC, name ASC").Find(&printers); err != nil {
-		return nil, err
+	printers, err := h.Printers.List()
+	if err != nil {
+		return feedsPageData{}, err
 	}
-	return map[string]any{
-		"User":     middleware.GetUser(r.Context()),
-		"Path":     r.URL.Path,
-		"Feeds":    feeds,
-		"Printers": printers,
-		"Notice":   notice,
-		"Error":    formError,
+	return feedsPageData{
+		pageData: pageData{
+			User:   middleware.GetUser(r.Context()),
+			Path:   r.URL.Path,
+			Notice: notice,
+			Error:  formError,
+		},
+		Feeds:    feeds,
+		Printers: printers,
 	}, nil
 }
 
-func importFeedArticles(engine *xorm.Engine, feedID int64, parsedFeed *gofeed.Feed) int {
+func importFeedArticles(articles *repositories.ArticleRepo, feedID int64, parsedFeed *gofeed.Feed) int {
 	imported := 0
 	for _, item := range parsedFeed.Items {
 		guid := strings.TrimSpace(item.GUID)
@@ -182,7 +191,7 @@ func importFeedArticles(engine *xorm.Engine, feedID int64, parsedFeed *gofeed.Fe
 		if item.PublishedParsed != nil {
 			article.PublishedAt = *item.PublishedParsed
 		}
-		if _, err := engine.Insert(article); err == nil {
+		if err := articles.Create(article); err == nil {
 			imported++
 		}
 	}

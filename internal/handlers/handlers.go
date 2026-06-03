@@ -15,7 +15,7 @@ func parseOptionalInt64(value string) (int64, error) {
 	return strconv.ParseInt(value, 10, 64)
 }
 
-func renderPage(w http.ResponseWriter, r *http.Request, tmpl *template.Template, data map[string]any) error {
+func renderPage(w http.ResponseWriter, r *http.Request, tmpl *template.Template, data any) error {
 	if r.Header.Get("HX-Request") == "true" {
 		if err := tmpl.ExecuteTemplate(w, "content", data); err != nil {
 			return err

@@ -7,14 +7,17 @@ import (
 	"time"
 
 	"rss-print/internal/models"
+	"rss-print/internal/repositories"
 	"rss-print/internal/services"
-	"xorm.io/xorm"
 )
 
 // Worker handles background tasks like polling feeds and dispatching prints
 type Worker struct {
-	DB *xorm.Engine
-	wg sync.WaitGroup
+	Feeds    *repositories.FeedRepo
+	Articles *repositories.ArticleRepo
+	Printers *repositories.PrinterRepo
+	Jobs     *repositories.PrintJobRepo
+	wg       sync.WaitGroup
 }
 
 // Start begins the background processing loops
@@ -43,8 +46,7 @@ func (w *Worker) Wait() {
 }
 
 func (w *Worker) pollFeeds() {
-	var feeds []models.Feed
-	err := w.DB.Find(&feeds)
+	feeds, err := w.Feeds.List()
 	if err != nil {
 		log.Printf("Worker failed to fetch feeds: %v", err)
 		return
@@ -70,13 +72,13 @@ func (w *Worker) processFeed(feed models.Feed) {
 		log.Printf("Worker failed to parse feed %s: %v", feed.URL, err)
 		feed.LastError = err.Error()
 		feed.LastPolledAt = time.Now()
-		w.DB.ID(feed.ID).Cols("last_error", "last_polled_at").Update(&feed)
+		w.Feeds.UpdatePollResult(&feed)
 		return
 	}
 
 	feed.LastError = ""
 	feed.LastPolledAt = time.Now()
-	w.DB.ID(feed.ID).Cols("last_error", "last_polled_at").Update(&feed)
+	w.Feeds.UpdatePollResult(&feed)
 
 	for _, item := range parsedFeed.Items {
 		guid := item.GUID
@@ -95,7 +97,7 @@ func (w *Worker) processFeed(feed models.Feed) {
 			article.PublishedAt = *item.PublishedParsed
 		}
 
-		_, err := w.DB.Insert(article)
+		err := w.Articles.Create(article)
 		if err != nil {
 			// Expected error for duplicates. Skip job creation.
 			continue
@@ -109,7 +111,7 @@ func (w *Worker) processFeed(feed models.Feed) {
 				PrinterID: feed.PrinterID, // Can be 0 for default
 				Status:    "Pending",
 			}
-			_, err = w.DB.Insert(job)
+			err = w.Jobs.Create(job)
 			if err != nil {
 				log.Printf("Worker failed to create print job: %v", err)
 			} else {
@@ -120,9 +122,8 @@ func (w *Worker) processFeed(feed models.Feed) {
 }
 
 func (w *Worker) processJobs() {
-	var jobs []models.PrintJob
 	// Get Pending jobs, or Failed jobs that haven't exceeded retry count
-	err := w.DB.Where("status = 'Pending' OR (status = 'Failed' AND retry_count < 3)").Find(&jobs)
+	jobs, err := w.Jobs.ListPending()
 	if err != nil {
 		log.Printf("Worker failed to fetch jobs: %v", err)
 		return
@@ -136,19 +137,17 @@ func (w *Worker) processJobs() {
 func (w *Worker) executeJob(job *models.PrintJob) {
 	log.Printf("Executing print job %d", job.ID)
 
-	var article models.Article
-	has, err := w.DB.ID(job.ArticleID).Get(&article)
+	article, has, err := w.Articles.GetByID(job.ArticleID)
 	if err != nil || !has {
 		log.Printf("Article not found for job %d", job.ID)
 		w.markJobFailed(job, "Article not found")
 		return
 	}
 
-	var printer models.Printer
-	has, err = w.DB.ID(job.PrinterID).Get(&printer)
+	printer, has, err := w.Printers.GetByID(job.PrinterID)
 	if err != nil || !has {
 		// Try to fallback to global default printer
-		has, err = w.DB.Where("is_default = ?", true).Get(&printer)
+		printer, has, err = w.Printers.GetDefault()
 		if err != nil || !has {
 			log.Printf("No printer found for job %d", job.ID)
 			w.markJobFailed(job, "No printer configured or default printer found")
@@ -179,7 +178,7 @@ func (w *Worker) executeJob(job *models.PrintJob) {
 	// Success
 	job.Status = "Sent"
 	job.LastError = ""
-	w.DB.ID(job.ID).Cols("status", "last_error", "updated_at").Update(job)
+	w.Jobs.UpdateStatus(job)
 	log.Printf("Job %d completed successfully", job.ID)
 }
 
@@ -187,5 +186,5 @@ func (w *Worker) markJobFailed(job *models.PrintJob, reason string) {
 	job.Status = "Failed"
 	job.LastError = reason
 	job.RetryCount++
-	w.DB.ID(job.ID).Cols("status", "last_error", "retry_count", "updated_at").Update(job)
+	w.Jobs.MarkFailed(job)
 }

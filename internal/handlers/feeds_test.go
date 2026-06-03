@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"rss-print/internal/models"
+	"rss-print/internal/repositories"
 
 	"github.com/mmcdole/gofeed"
 )
@@ -18,8 +19,10 @@ func TestFeedCreateValidatesCustomHeaderPair(t *testing.T) {
 	tmpl := testTemplate(t, "templates/feeds.html")
 	called := false
 	handler := &FeedHandler{
-		DB:   engine,
-		Tmpl: tmpl,
+		Feeds:    repositories.NewFeedRepo(engine),
+		Printers: repositories.NewPrinterRepo(engine),
+		Articles: repositories.NewArticleRepo(engine),
+		Tmpl:     tmpl,
 		FetchFeed: func(context.Context, string, string, string) (*gofeed.Feed, error) {
 			called = true
 			return &gofeed.Feed{}, nil
@@ -47,8 +50,10 @@ func TestFeedCreateImportsBaselineArticlesWithoutJobs(t *testing.T) {
 	engine := testDB(t)
 	tmpl := testTemplate(t, "templates/feeds.html")
 	handler := &FeedHandler{
-		DB:   engine,
-		Tmpl: tmpl,
+		Feeds:    repositories.NewFeedRepo(engine),
+		Printers: repositories.NewPrinterRepo(engine),
+		Articles: repositories.NewArticleRepo(engine),
+		Tmpl:     tmpl,
 		FetchFeed: func(_ context.Context, feedURL string, headerName string, headerValue string) (*gofeed.Feed, error) {
 			if feedURL != "https://example.com/feed.xml" || headerName != "X-Token" || headerValue != "secret" {
 				t.Fatalf("unexpected fetch args: %q %q %q", feedURL, headerName, headerValue)

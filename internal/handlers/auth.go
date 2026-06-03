@@ -7,20 +7,24 @@ import (
 
 	"rss-print/internal/middleware"
 	"rss-print/internal/models"
+	"rss-print/internal/repositories"
 
 	"golang.org/x/crypto/bcrypt"
-	"xorm.io/xorm"
 )
 
 type AuthHandler struct {
-	DB   *xorm.Engine
-	Tmpl *template.Template
+	Users *repositories.UserRepo
+	Tmpl  *template.Template
+}
+
+type loginPageData struct {
+	pageData
 }
 
 func (h *AuthHandler) RenderLogin(w http.ResponseWriter, r *http.Request) {
-	data := map[string]any{}
+	data := loginPageData{}
 	if r.URL.Query().Get("error") == "1" {
-		data["Error"] = "Invalid username or password"
+		data.Error = "Invalid username or password"
 	}
 	if err := h.Tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
 		log.Printf("failed to render login template: %v", err)
@@ -37,8 +41,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	user := &models.User{}
-	has, err := h.DB.Where("username = ?", username).Get(user)
+	user, has, err := h.Users.GetByUsername(username)
 	if err != nil || !has {
 		http.Redirect(w, r, "/login?error=1", http.StatusFound)
 		return
@@ -64,8 +67,8 @@ func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateDefaultUser creates a default admin user if no users exist
-func CreateDefaultUser(db *xorm.Engine) error {
-	count, err := db.Count(new(models.User))
+func CreateDefaultUser(users *repositories.UserRepo) error {
+	count, err := users.Count()
 	if err != nil {
 		return err
 	}
@@ -75,8 +78,7 @@ func CreateDefaultUser(db *xorm.Engine) error {
 			Username:     "admin",
 			PasswordHash: string(hash),
 		}
-		_, err = db.Insert(user)
-		if err != nil {
+		if err := users.Create(user); err != nil {
 			return err
 		}
 		log.Println("Created default user: admin / admin")

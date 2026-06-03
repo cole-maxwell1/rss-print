@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"rss-print/internal/models"
+	"rss-print/internal/repositories"
+
 	"github.com/gorilla/sessions"
-	"xorm.io/xorm"
 )
 
 var Store = sessions.NewCookieStore([]byte("rss-print-secret-key-change-me")) // TODO: move to env
@@ -16,7 +17,7 @@ type contextKey string
 const UserContextKey contextKey = "user"
 
 // AuthMiddleware ensures the user is logged in
-func AuthMiddleware(db *xorm.Engine, next http.HandlerFunc) http.HandlerFunc {
+func AuthMiddleware(users *repositories.UserRepo, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := Store.Get(r, "session-name")
 		userID, ok := session.Values["userID"].(int64)
@@ -26,8 +27,7 @@ func AuthMiddleware(db *xorm.Engine, next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		user := &models.User{}
-		has, err := db.ID(userID).Get(user)
+		user, has, err := users.GetByID(userID)
 		if err != nil || !has {
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return

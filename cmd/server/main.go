@@ -14,6 +14,7 @@ import (
 	"rss-print/internal/db"
 	"rss-print/internal/handlers"
 	"rss-print/internal/middleware"
+	"rss-print/internal/repositories"
 	"rss-print/internal/worker"
 	"rss-print/ui"
 )
@@ -37,13 +38,21 @@ func main() {
 		log.Fatalf("Fatal error initializing database: %v", err)
 	}
 
+	// Construct the data-access repositories once and share them across the
+	// handlers, worker, and middleware.
+	userRepo := repositories.NewUserRepo(engine)
+	feedRepo := repositories.NewFeedRepo(engine)
+	articleRepo := repositories.NewArticleRepo(engine)
+	printerRepo := repositories.NewPrinterRepo(engine)
+	jobRepo := repositories.NewPrintJobRepo(engine)
+
 	// Ensure at least one admin user exists
-	if err := handlers.CreateDefaultUser(engine); err != nil {
+	if err := handlers.CreateDefaultUser(userRepo); err != nil {
 		log.Fatalf("Failed to create default user: %v", err)
 	}
 
 	// 2. Start Background Worker
-	bgWorker := &worker.Worker{DB: engine}
+	bgWorker := &worker.Worker{Feeds: feedRepo, Articles: articleRepo, Printers: printerRepo, Jobs: jobRepo}
 	bgWorker.Start(ctx)
 
 	// 3. Parse Templates
@@ -59,10 +68,10 @@ func main() {
 	mux.Handle("GET /static/", http.FileServer(http.FS(ui.FS)))
 
 	// Handlers
-	authH := &handlers.AuthHandler{DB: engine, Tmpl: loginTmpl}
-	dashH := &handlers.DashboardHandler{DB: engine, Tmpl: dashTmpl}
-	feedH := &handlers.FeedHandler{DB: engine, Tmpl: feedsTmpl}
-	printerH := &handlers.PrinterHandler{DB: engine, Tmpl: printersTmpl}
+	authH := &handlers.AuthHandler{Users: userRepo, Tmpl: loginTmpl}
+	dashH := &handlers.DashboardHandler{Articles: articleRepo, Printers: printerRepo, Jobs: jobRepo, Tmpl: dashTmpl}
+	feedH := &handlers.FeedHandler{Feeds: feedRepo, Printers: printerRepo, Articles: articleRepo, Tmpl: feedsTmpl}
+	printerH := &handlers.PrinterHandler{Printers: printerRepo, Tmpl: printersTmpl}
 
 	// Public Routes
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -74,16 +83,16 @@ func main() {
 	mux.HandleFunc("POST /logout", authH.HandleLogout)
 
 	// Protected Routes
-	mux.HandleFunc("GET /", middleware.AuthMiddleware(engine, dashH.Render))
-	mux.HandleFunc("POST /prints", middleware.AuthMiddleware(engine, dashH.HandleCreatePrint))
-	mux.HandleFunc("POST /prints/{id}/retry", middleware.AuthMiddleware(engine, dashH.HandleRetryPrint))
-	mux.HandleFunc("GET /feed", middleware.AuthMiddleware(engine, feedH.Render))
-	mux.HandleFunc("GET /feeds", middleware.AuthMiddleware(engine, feedH.Render))
-	mux.HandleFunc("POST /feeds", middleware.AuthMiddleware(engine, feedH.HandleCreate))
-	mux.HandleFunc("GET /printers", middleware.AuthMiddleware(engine, printerH.Render))
-	mux.HandleFunc("POST /printers/discover", middleware.AuthMiddleware(engine, printerH.HandleDiscover))
-	mux.HandleFunc("POST /printers", middleware.AuthMiddleware(engine, printerH.HandleCreate))
-	mux.HandleFunc("POST /printers/{id}/default", middleware.AuthMiddleware(engine, printerH.HandleSetDefault))
+	mux.HandleFunc("GET /", middleware.AuthMiddleware(userRepo, dashH.Render))
+	mux.HandleFunc("POST /prints", middleware.AuthMiddleware(userRepo, dashH.HandleCreatePrint))
+	mux.HandleFunc("POST /prints/{id}/retry", middleware.AuthMiddleware(userRepo, dashH.HandleRetryPrint))
+	mux.HandleFunc("GET /feed", middleware.AuthMiddleware(userRepo, feedH.Render))
+	mux.HandleFunc("GET /feeds", middleware.AuthMiddleware(userRepo, feedH.Render))
+	mux.HandleFunc("POST /feeds", middleware.AuthMiddleware(userRepo, feedH.HandleCreate))
+	mux.HandleFunc("GET /printers", middleware.AuthMiddleware(userRepo, printerH.Render))
+	mux.HandleFunc("POST /printers/discover", middleware.AuthMiddleware(userRepo, printerH.HandleDiscover))
+	mux.HandleFunc("POST /printers", middleware.AuthMiddleware(userRepo, printerH.HandleCreate))
+	mux.HandleFunc("POST /printers/{id}/default", middleware.AuthMiddleware(userRepo, printerH.HandleSetDefault))
 
 	// 5. Start Server
 	port := os.Getenv("PORT")
