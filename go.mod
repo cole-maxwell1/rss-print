@@ -3,10 +3,10 @@ module rss-print
 go 1.26.1
 
 require (
-	github.com/OpenPrinting/goipp v1.2.0
 	github.com/gorilla/sessions v1.4.0
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/mmcdole/gofeed v1.3.0
+	github.com/phin1x/go-ipp v1.7.0
 	github.com/signintech/gopdf v0.36.1
 	golang.org/x/crypto v0.52.0
 	golang.org/x/net v0.54.0
