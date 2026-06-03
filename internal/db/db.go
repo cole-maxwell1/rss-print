@@ -45,3 +45,13 @@ func InitDB(dsn string) (*xorm.Engine, error) {
 
 	return engine, nil
 }
+
+// Close checkpoints the WAL into the main database file and closes the engine.
+// Running wal_checkpoint(TRUNCATE) on the last open connection guarantees the
+// -wal/-shm sidecar files are reset on a clean shutdown rather than left active.
+func Close(engine *xorm.Engine) error {
+	if _, err := engine.Exec("PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
+		log.Printf("wal checkpoint on shutdown failed: %v", err)
+	}
+	return engine.Close()
+}

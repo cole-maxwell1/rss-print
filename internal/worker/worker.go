@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	"rss-print/internal/models"
@@ -13,11 +14,12 @@ import (
 // Worker handles background tasks like polling feeds and dispatching prints
 type Worker struct {
 	DB *xorm.Engine
+	wg sync.WaitGroup
 }
 
 // Start begins the background processing loops
 func (w *Worker) Start(ctx context.Context) {
-	go func() {
+	w.wg.Go(func() {
 		ticker := time.NewTicker(30 * time.Second) // poll faster for jobs
 		defer ticker.Stop()
 
@@ -31,7 +33,13 @@ func (w *Worker) Start(ctx context.Context) {
 				w.processJobs()
 			}
 		}
-	}()
+	})
+}
+
+// Wait blocks until the background loop has exited. Call after cancelling the
+// context passed to Start so the worker stops writing before the DB closes.
+func (w *Worker) Wait() {
+	w.wg.Wait()
 }
 
 func (w *Worker) pollFeeds() {

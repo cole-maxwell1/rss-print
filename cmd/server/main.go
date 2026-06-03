@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"rss-print/internal/db"
 	"rss-print/internal/handlers"
@@ -17,6 +21,11 @@ import (
 func main() {
 	log.Println("Starting RSS Auto-Print Server...")
 
+	// Cancel the root context on interrupt or termination so the worker loop
+	// and HTTP server can shut down cleanly before the database is closed.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	// 1. Initialize Database
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
@@ -27,7 +36,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Fatal error initializing database: %v", err)
 	}
-	defer engine.Close()
 
 	// Ensure at least one admin user exists
 	if err := handlers.CreateDefaultUser(engine); err != nil {
@@ -36,7 +44,7 @@ func main() {
 
 	// 2. Start Background Worker
 	bgWorker := &worker.Worker{DB: engine}
-	bgWorker.Start(context.Background())
+	bgWorker.Start(ctx)
 
 	// 3. Parse Templates
 	loginTmpl := template.Must(template.ParseFS(ui.FS, "templates/base.html", "templates/login.html"))
@@ -83,8 +91,31 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Server listening on :%s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+	srv := &http.Server{Addr: ":" + port, Handler: mux}
+
+	go func() {
+		log.Printf("Server listening on :%s", port)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("Server failed: %v", err)
+			stop() // unblock main and trigger shutdown
+		}
+	}()
+
+	// 6. Graceful shutdown: stop serving requests, stop the worker, then close
+	// the database so the WAL is checkpointed instead of left active.
+	<-ctx.Done()
+	log.Println("Shutdown signal received, stopping server...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Server shutdown error: %v", err)
 	}
+
+	bgWorker.Wait()
+
+	if err := db.Close(engine); err != nil {
+		log.Printf("Database close error: %v", err)
+	}
+	log.Println("Shutdown complete.")
 }
