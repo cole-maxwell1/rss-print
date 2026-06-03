@@ -20,7 +20,7 @@
     {{ end }}
 
     <form
-        class="mt-8 grid grid-cols-1 gap-4 rounded-lg bg-surface-0 p-4 shadow ring-1 ring-black ring-opacity-5 md:grid-cols-2"
+        class="mt-8 grid grid-cols-1 gap-4 rounded-lg p-4 shadow md:grid-cols-2"
         action="/feeds"
         method="POST"
         hx-post="/feeds"
@@ -28,81 +28,28 @@
         hx-swap="innerHTML"
     >
         <div>
-            <label for="name" class="block text-sm font-medium leading-6"
-                >Name</label
-            >
-            <input
-                id="name"
-                name="name"
-                type="text"
-                class="mt-2 block w-full rounded-md border-0 px-3 py-2 shadow-sm ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary sm:text-sm"
-            />
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" />
         </div>
         <div>
-            <label for="url" class="block text-sm font-medium leading-6"
-                >Feed URL</label
-            >
-            <input
-                id="url"
-                name="url"
-                type="url"
-                required
-                class="mt-2 block w-full rounded-md border-0 px-3 py-2 shadow-sm ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary sm:text-sm"
-            />
+            <label for="url">Feed URL</label>
+            <input id="url" name="url" type="url" required />
         </div>
         <div>
-            <label
-                for="auth_header_name"
-                class="block text-sm font-medium leading-6"
-                >Auth header name</label
-            >
-            <input
-                id="auth_header_name"
-                name="auth_header_name"
-                type="text"
-                autocomplete="off"
-                class="mt-2 block w-full rounded-md border-0 px-3 py-2 shadow-sm ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary sm:text-sm"
-            />
+            <label for="auth_header_name">Auth header name</label>
+            <input id="auth_header_name" name="auth_header_name" type="text" autocomplete="off" />
         </div>
         <div>
-            <label
-                for="auth_header_value"
-                class="block text-sm font-medium leading-6"
-                >Auth header value</label
-            >
-            <input
-                id="auth_header_value"
-                name="auth_header_value"
-                type="password"
-                autocomplete="new-password"
-                class="mt-2 block w-full rounded-md border-0 px-3 py-2 shadow-sm ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary sm:text-sm"
-            />
+            <label for="auth_header_value">Auth header value</label>
+            <input id="auth_header_value" name="auth_header_value" type="password" autocomplete="new-password" />
         </div>
         <div>
-            <label
-                for="poll_interval"
-                class="block text-sm font-medium leading-6"
-                >Poll interval</label
-            >
-            <input
-                id="poll_interval"
-                name="poll_interval"
-                type="number"
-                min="1"
-                value="30"
-                required
-                class="mt-2 block w-full rounded-md border-0 px-3 py-2 shadow-sm ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary sm:text-sm"
-            />
+            <label for="poll_interval">Poll interval</label>
+            <input id="poll_interval" name="poll_interval" type="number" min="1" value="30" required />
         </div>
         <div>
-            <label for="printer_id" class="block text-sm font-medium leading-6"
-                >Feed printer</label
-            >
-            <select
-                id="printer_id"
-                name="printer_id"
-                class="mt-2 block w-full rounded-md border-0 px-3 py-2 shadow-sm ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary sm:text-sm"
-            >
+            <label for="printer_id">Feed printer</label>
+            <select id="printer_id" name="printer_id">
                 <option value="">Global default</option>
                 {{ range .Printers }}
                 <option value="{{ .ID }}">{{ .Name }}</option>
@@ -110,23 +57,11 @@
             </select>
         </div>
         <div class="flex items-center gap-3 md:col-span-2">
-            <input
-                id="auto_print"
-                name="auto_print"
-                type="checkbox"
-                class="h-4 w-4 rounded border-surface-300 text-primary focus:ring-primary"
-            />
-            <label for="auto_print" class="text-sm font-medium"
-                >Auto-print new articles</label
-            >
+            <input id="auto_print" name="auto_print" type="checkbox" />
+            <label for="auto_print">Auto-print new articles</label>
         </div>
         <div class="md:col-span-2">
-            <button
-                type="submit"
-                class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
-            >
-                Add feed
-            </button>
+            <button type="submit" class="btn btn-primary">Add feed</button>
         </div>
     </form>
 

@@ -9,12 +9,9 @@
                 </div>
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4" hx-boost="true" hx-target="#page-content" hx-swap="innerHTML" hx-push-url="true">
-                        <a href="/" class="{{ if eq .Path "/" }}bg-black/30 text-white{{ else }}text-white/70 hover:bg-white/10 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium"
-                            aria-current="page">Dashboard</a>
-                        <a href="/feeds"
-                            class="{{ if or (eq .Path "/feeds") (eq .Path "/feed") }}bg-black/30 text-white{{ else }}text-white/70 hover:bg-white/10 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium">Feeds</a>
-                        <a href="/printers"
-                            class="{{ if eq .Path "/printers" }}bg-black/30 text-white{{ else }}text-white/70 hover:bg-white/10 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium">Printers</a>
+                        <a href="/" class="nav-link" {{ if eq .Path "/" }}aria-current="page"{{ end }}>Dashboard</a>
+                        <a href="/feeds" class="nav-link" {{ if or (eq .Path "/feeds") (eq .Path "/feed") }}aria-current="page"{{ end }}>Feeds</a>
+                        <a href="/printers" class="nav-link" {{ if eq .Path "/printers" }}aria-current="page"{{ end }}>Printers</a>
                     </div>
                 </div>
             </div>
@@ -22,8 +19,7 @@
                 <div class="ml-4 flex items-center md:ml-6">
                     <span class="text-white/70 mr-4">{{ .User.Username }}</span>
                     <form action="/logout" method="POST">
-                        <button type="submit"
-                            class="text-white/70 hover:bg-white/10 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Logout</button>
+                        <button type="submit" class="nav-link">Logout</button>
                     </form>
                 </div>
             </div>
@@ -40,6 +36,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSS Auto-Print Server</title>
+    <meta name="description" content="RSS Auto-Print Server">
     <link href="/static/css/style.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
         integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"

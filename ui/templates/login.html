@@ -19,46 +19,17 @@
         {{ end }}
         <form class="space-y-6" action="/login" method="POST">
             <div>
-                <label
-                    for="username"
-                    class="block text-sm font-medium leading-6"
-                    >Username</label
-                >
-                <div class="mt-2">
-                    <input
-                        id="username"
-                        name="username"
-                        type="text"
-                        required
-                        class="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-surface-300 placeholder:text-surface-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
-                    />
-                </div>
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" required />
             </div>
 
             <div>
-                <label
-                    for="password"
-                    class="block text-sm font-medium leading-6"
-                    >Password</label
-                >
-                <div class="mt-2">
-                    <input
-                        id="password"
-                        name="password"
-                        type="password"
-                        required
-                        class="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-surface-300 placeholder:text-surface-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
-                    />
-                </div>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" required />
             </div>
 
             <div>
-                <button
-                    type="submit"
-                    class="flex w-full justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                >
-                    Sign in
-                </button>
+                <button type="submit" class="btn btn-primary w-full">Sign in</button>
             </div>
         </form>
     </div>

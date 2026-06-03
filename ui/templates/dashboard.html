@@ -96,12 +96,7 @@
                                         hx-target="#page-content"
                                         hx-swap="innerHTML"
                                     >
-                                        <button
-                                            type="submit"
-                                            class="text-primary hover:text-primary/80"
-                                        >
-                                            Retry
-                                        </button>
+                                        <button type="submit" class="btn-link">Retry</button>
                                     </form>
                                     {{ end }}
                                 </td>
@@ -184,10 +179,7 @@
                                             name="article_id"
                                             value="{{ .ID }}"
                                         />
-                                        <select
-                                            name="printer_id"
-                                            class="block w-44 rounded-md border-0 px-2 py-1.5 shadow-sm ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary sm:text-sm"
-                                        >
+                                        <select name="printer_id" class="w-44 mt-0">
                                             <option value="">Default</option>
                                             {{ range $.Printers }}
                                             <option value="{{ .ID }}">
@@ -195,12 +187,7 @@
                                             </option>
                                             {{ end }}
                                         </select>
-                                        <button
-                                            type="submit"
-                                            class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
-                                        >
-                                            Print
-                                        </button>
+                                        <button type="submit" class="btn btn-primary">Print</button>
                                     </form>
                                 </td>
                                 <td></td>

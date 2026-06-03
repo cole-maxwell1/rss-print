@@ -27,12 +27,7 @@
             hx-target="#page-content"
             hx-swap="innerHTML"
         >
-            <button
-                type="submit"
-                class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
-            >
-                Discover printers
-            </button>
+            <button type="submit" class="btn btn-primary">Discover printers</button>
         </form>
     </div>
 
@@ -100,12 +95,7 @@
                                 name="uri"
                                 value="{{ .URI }}"
                             />
-                            <button
-                                type="submit"
-                                class="text-primary hover:text-primary/80"
-                            >
-                                Add
-                            </button>
+                            <button type="submit" class="btn-link">Add</button>
                         </form>
                     </td>
                 </tr>
@@ -193,12 +183,7 @@
                                         hx-target="#page-content"
                                         hx-swap="innerHTML"
                                     >
-                                        <button
-                                            type="submit"
-                                            class="text-primary hover:text-primary/80"
-                                        >
-                                            Set default
-                                        </button>
+                                        <button type="submit" class="btn-link">Set default</button>
                                     </form>
                                     {{ end }}
                                 </td>

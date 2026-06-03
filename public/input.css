@@ -144,4 +144,189 @@
   tr:last-child td {
     border-bottom: none;
   }
+
+  /* ---- Forms: native controls styled bare (zero classes in markup) ---- */
+
+  /* Text-like inputs, selects, textareas share one box. Enumerate input
+     types so checkbox/radio/hidden/submit/file are NOT captured. */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="url"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  select,
+  textarea {
+    display: block;
+    width: 100%;
+    margin-block-start: 0.5rem;   /* bakes in the per-field mt-2 */
+    padding-block: 0.5rem;        /* unified on feeds px-3 py-2   */
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--color-surface-900);
+    background-color: var(--color-surface-0);
+    border: 1px solid var(--color-surface-300);   /* replaces ring-1 ring-inset */
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    appearance: none;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-surface-400);
+  }
+
+  input[type="text"]:hover,
+  input[type="email"]:hover,
+  input[type="password"]:hover,
+  input[type="url"]:hover,
+  input[type="number"]:hover,
+  input[type="search"]:hover,
+  input[type="tel"]:hover,
+  select:hover,
+  textarea:hover {
+    border-color: var(--color-surface-400);
+  }
+
+  /* Keyboard-accessible focus: a real outline (renders in forced-colors
+     mode); :focus-visible shows on tab but not on mouse click. */
+  input[type="text"]:focus-visible,
+  input[type="email"]:focus-visible,
+  input[type="password"]:focus-visible,
+  input[type="url"]:focus-visible,
+  input[type="number"]:focus-visible,
+  input[type="search"]:focus-visible,
+  input[type="tel"]:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-color: var(--color-primary);
+  }
+
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    background-color: var(--color-surface-100);
+    color: var(--color-surface-400);
+    cursor: not-allowed;
+  }
+
+  /* Labels bare (was: block text-sm font-medium leading-6) */
+  label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5rem;
+  }
+
+  /* Checkbox/radio: native control tinted with the brand color; keeps full
+     keyboard and screen-reader behavior, no custom widget. */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--color-primary);
+    inline-size: 1rem;
+    block-size: 1rem;
+  }
+  input[type="checkbox"]:focus-visible,
+  input[type="radio"]:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    input, select, textarea, button, a {
+      transition: none;
+    }
+  }
+}
+
+@layer components {
+  /* ---- Buttons ----
+     The bare <button> tag is reused for primary, link, and nav variants,
+     so there is no blanket button{} rule; each button carries one semantic
+     class. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 0;
+    border-radius: 0.375rem;
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    cursor: pointer;
+    text-decoration: none;   /* lets an <a> share .btn */
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Solid primary CTA: Sign in, Add feed, Print, Discover printers */
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  .btn-primary:hover {
+    background-color: color-mix(in srgb, var(--color-primary) 90%, transparent);
+  }
+
+  /* Text/link action: Retry, Add, Set default */
+  .btn-link {
+    background: transparent;
+    color: var(--color-primary);
+    padding: 0;
+    font-weight: 500;
+  }
+  .btn-link:hover {
+    color: color-mix(in srgb, var(--color-primary) 80%, transparent);
+    text-decoration: underline;   /* non-color hover cue (WCAG 1.4.1) */
+  }
+  .btn-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 0.125rem;
+  }
+
+  /* ---- Navbar links + logout on the dark secondary bar ----
+     Literal white values (not surface vars): the navbar is bg-secondary
+     charcoal in both light and dark mode, so it stays light-on-dark. */
+  .nav-link {
+    display: inline-block;
+    border-radius: 0.375rem;
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(255 255 255 / 0.7);
+    text-decoration: none;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .nav-link:hover {
+    background-color: rgb(255 255 255 / 0.1);
+    color: #ffffff;
+  }
+  .nav-link:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+  }
+  /* Active state driven by the attribute, not a Go-conditional utility blob */
+  .nav-link[aria-current="page"] {
+    background-color: rgb(0 0 0 / 0.3);
+    color: #ffffff;
+  }
 }
