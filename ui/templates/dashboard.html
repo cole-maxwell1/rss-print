@@ -2,54 +2,116 @@
 <div class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
-            <h1 class="text-base font-semibold leading-6 text-surface-900">Dashboard</h1>
-            <p class="mt-2 text-sm text-surface-700">Overview of recent print jobs and feed activity.</p>
+            <h1 class="text-base font-semibold leading-6">Dashboard</h1>
+            <p class="mt-2 text-sm text-surface-700">
+                Overview of recent print jobs and feed activity.
+            </p>
         </div>
     </div>
 
     {{ if .Notice }}
-    <div class="mt-6 rounded-md bg-success/10 p-4 text-sm text-success">{{ .Notice }}</div>
-    {{ end }}
-    {{ if .Error }}
-    <div class="mt-6 rounded-md bg-danger/10 p-4 text-sm text-danger">{{ .Error }}</div>
+    <div class="mt-6 rounded-md bg-success/10 p-4 text-sm text-success">
+        {{ .Notice }}
+    </div>
+    {{ end }} {{ if .Error }}
+    <div class="mt-6 rounded-md bg-danger/10 p-4 text-sm text-danger">
+        {{ .Error }}
+    </div>
     {{ end }}
 
     <div class="mt-8 flow-root">
-        <h2 class="text-sm font-semibold leading-6 text-surface-900">Recent print jobs</h2>
+        <h2 class="text-sm font-semibold leading-6">Recent print jobs</h2>
         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+            <div
+                class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+            >
+                <div
+                    class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg"
+                >
                     <table class="min-w-full divide-y divide-surface-300">
                         <thead class="bg-surface-100">
                             <tr>
-                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-surface-900 sm:pl-6">Article</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">Status</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">Printer</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">Date</th>
-                                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
+                                <th
+                                    scope="col"
+                                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6"
+                                >
+                                    Article
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="px-3 py-3.5 text-left text-sm font-semibold"
+                                >
+                                    Status
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="px-3 py-3.5 text-left text-sm font-semibold"
+                                >
+                                    Printer
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="px-3 py-3.5 text-left text-sm font-semibold"
+                                >
+                                    Date
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="relative py-3.5 pl-3 pr-4 sm:pr-6"
+                                >
+                                    <span class="sr-only">Actions</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-surface-200 bg-surface-0">
                             {{ range .Jobs }}
                             <tr>
-                                <td class="py-4 pl-4 pr-3 text-sm font-medium text-surface-900 sm:pl-6">{{ .Article.Title }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-surface-500">
-                                    {{ .Job.Status }}
-                                    {{ if .Job.LastError }}<div class="text-danger">{{ .Job.LastError }}</div>{{ end }}
+                                <td
+                                    class="py-4 pl-4 pr-3 text-sm font-medium sm:pl-6"
+                                >
+                                    {{ .Article.Title }}
                                 </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-surface-500">{{ if .Printer.Name }}{{ .Printer.Name }}{{ else }}Default{{ end }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-surface-500">{{ .Job.CreatedAt.Format "Jan 2, 2006 3:04 PM" }}</td>
-                                <td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    {{ .Job.Status }} {{ if .Job.LastError }}
+                                    <div class="text-danger">
+                                        {{ .Job.LastError }}
+                                    </div>
+                                    {{ end }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    {{ if .Printer.Name }}{{ .Printer.Name }}{{
+                                    else }}Default{{ end }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    {{ .Job.CreatedAt.Format "Jan 2, 2006 3:04 PM" }}
+                                </td>
+                                <td
+                                    class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
+                                >
                                     {{ if eq .Job.Status "Failed" }}
-                                    <form action="/prints/{{ .Job.ID }}/retry" method="POST" hx-post="/prints/{{ .Job.ID }}/retry" hx-target="#page-content" hx-swap="innerHTML">
-                                        <button type="submit" class="text-primary hover:text-primary/80">Retry</button>
+                                    <form
+                                        action="/prints/{{ .Job.ID }}/retry"
+                                        method="POST"
+                                        hx-post="/prints/{{ .Job.ID }}/retry"
+                                        hx-target="#page-content"
+                                        hx-swap="innerHTML"
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="text-primary hover:text-primary/80"
+                                        >
+                                            Retry
+                                        </button>
                                     </form>
                                     {{ end }}
                                 </td>
                             </tr>
                             {{ else }}
                             <tr>
-                                <td colspan="5" class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-surface-900 sm:pl-6 text-center text-surface-500">
+                                <td
+                                    colspan="5"
+                                    class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-6 text-center"
+                                >
                                     No print jobs yet.
                                 </td>
                             </tr>
@@ -62,41 +124,93 @@
     </div>
 
     <div class="mt-10 flow-root">
-        <h2 class="text-sm font-semibold leading-6 text-surface-900">Recent saved articles</h2>
+        <h2 class="text-sm font-semibold leading-6">Recent saved articles</h2>
         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+            <div
+                class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+            >
+                <div
+                    class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg"
+                >
                     <table class="min-w-full divide-y divide-surface-300">
                         <thead class="bg-surface-100">
                             <tr>
-                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-surface-900 sm:pl-6">Article</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">URL</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">Printer</th>
-                                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Print</span></th>
+                                <th
+                                    scope="col"
+                                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6"
+                                >
+                                    Article
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="px-3 py-3.5 text-left text-sm font-semibold"
+                                >
+                                    URL
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="px-3 py-3.5 text-left text-sm font-semibold"
+                                >
+                                    Printer
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="relative py-3.5 pl-3 pr-4 sm:pr-6"
+                                >
+                                    <span class="sr-only">Print</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-surface-200 bg-surface-0">
                             {{ range .Articles }}
                             <tr>
-                                <td class="py-4 pl-4 pr-3 text-sm font-medium text-surface-900 sm:pl-6">{{ .Title }}</td>
-                                <td class="px-3 py-4 text-sm text-surface-500">{{ .URL }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-surface-500">
-                                    <form class="flex items-center gap-2" action="/prints" method="POST" hx-post="/prints" hx-target="#page-content" hx-swap="innerHTML">
-                                        <input type="hidden" name="article_id" value="{{ .ID }}">
-                                        <select name="printer_id" class="block w-44 rounded-md border-0 px-2 py-1.5 text-surface-900 shadow-sm ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary sm:text-sm">
+                                <td
+                                    class="py-4 pl-4 pr-3 text-sm font-medium sm:pl-6"
+                                >
+                                    {{ .Title }}
+                                </td>
+                                <td class="px-3 py-4 text-sm">{{ .URL }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <form
+                                        class="flex items-center gap-2"
+                                        action="/prints"
+                                        method="POST"
+                                        hx-post="/prints"
+                                        hx-target="#page-content"
+                                        hx-swap="innerHTML"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="article_id"
+                                            value="{{ .ID }}"
+                                        />
+                                        <select
+                                            name="printer_id"
+                                            class="block w-44 rounded-md border-0 px-2 py-1.5 shadow-sm ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary sm:text-sm"
+                                        >
                                             <option value="">Default</option>
                                             {{ range $.Printers }}
-                                            <option value="{{ .ID }}">{{ .Name }}</option>
+                                            <option value="{{ .ID }}">
+                                                {{ .Name }}
+                                            </option>
                                             {{ end }}
                                         </select>
-                                        <button type="submit" class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90">Print</button>
+                                        <button
+                                            type="submit"
+                                            class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+                                        >
+                                            Print
+                                        </button>
                                     </form>
                                 </td>
                                 <td></td>
                             </tr>
                             {{ else }}
                             <tr>
-                                <td colspan="4" class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-surface-900 sm:pl-6 text-center text-surface-500">
+                                <td
+                                    colspan="4"
+                                    class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-6 text-center"
+                                >
                                     No saved articles yet.
                                 </td>
                             </tr>

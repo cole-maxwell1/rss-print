@@ -2,46 +2,110 @@
 <div class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
-            <h1 class="text-base font-semibold leading-6 text-surface-900">Printers</h1>
-            <p class="mt-2 text-sm text-surface-700">IPP printers available for automated print jobs.</p>
+            <h1 class="text-base font-semibold leading-6">Printers</h1>
+            <p class="mt-2 text-sm text-surface-700">
+                IPP printers available for automated print jobs.
+            </p>
         </div>
     </div>
 
     {{ if .Notice }}
-    <div class="mt-6 rounded-md bg-success/10 p-4 text-sm text-success">{{ .Notice }}</div>
-    {{ end }}
-    {{ if .Error }}
-    <div class="mt-6 rounded-md bg-danger/10 p-4 text-sm text-danger">{{ .Error }}</div>
+    <div class="mt-6 rounded-md bg-success/10 p-4 text-sm text-success">
+        {{ .Notice }}
+    </div>
+    {{ end }} {{ if .Error }}
+    <div class="mt-6 rounded-md bg-danger/10 p-4 text-sm text-danger">
+        {{ .Error }}
+    </div>
     {{ end }}
 
     <div class="mt-8 flex items-center gap-3">
-        <form action="/printers/discover" method="POST" hx-post="/printers/discover" hx-target="#page-content" hx-swap="innerHTML">
-            <button type="submit" class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90">Discover printers</button>
+        <form
+            action="/printers/discover"
+            method="POST"
+            hx-post="/printers/discover"
+            hx-target="#page-content"
+            hx-swap="innerHTML"
+        >
+            <button
+                type="submit"
+                class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+            >
+                Discover printers
+            </button>
         </form>
     </div>
 
     {{ if .Discovered }}
-    <div class="mt-6 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+    <div
+        class="mt-6 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg"
+    >
         <table class="min-w-full divide-y divide-surface-300">
             <thead class="bg-surface-100">
                 <tr>
-                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-surface-900 sm:pl-6">Discovered printer</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">URI</th>
-                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Add</span></th>
+                    <th
+                        scope="col"
+                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6"
+                    >
+                        Discovered printer
+                    </th>
+                    <th
+                        scope="col"
+                        class="px-3 py-3.5 text-left text-sm font-semibold"
+                    >
+                        URI
+                    </th>
+                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                        <span class="sr-only">Add</span>
+                    </th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-surface-200 bg-surface-0">
                 {{ range .Discovered }}
                 <tr>
-                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-surface-900 sm:pl-6">{{ .Name }}<div class="text-surface-500">{{ .Host }}:{{ .Port }}</div></td>
-                    <td class="px-3 py-4 text-sm text-surface-500">{{ .URI }}</td>
-                    <td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <form action="/printers" method="POST" hx-post="/printers" hx-target="#page-content" hx-swap="innerHTML">
-                            <input type="hidden" name="name" value="{{ .Name }}">
-                            <input type="hidden" name="host" value="{{ .Host }}">
-                            <input type="hidden" name="port" value="{{ .Port }}">
-                            <input type="hidden" name="uri" value="{{ .URI }}">
-                            <button type="submit" class="text-primary hover:text-primary/80">Add</button>
+                    <td
+                        class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-6"
+                    >
+                        {{ .Name }}
+                        <div>{{ .Host }}:{{ .Port }}</div>
+                    </td>
+                    <td class="px-3 py-4 text-sm">{{ .URI }}</td>
+                    <td
+                        class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
+                    >
+                        <form
+                            action="/printers"
+                            method="POST"
+                            hx-post="/printers"
+                            hx-target="#page-content"
+                            hx-swap="innerHTML"
+                        >
+                            <input
+                                type="hidden"
+                                name="name"
+                                value="{{ .Name }}"
+                            />
+                            <input
+                                type="hidden"
+                                name="host"
+                                value="{{ .Host }}"
+                            />
+                            <input
+                                type="hidden"
+                                name="port"
+                                value="{{ .Port }}"
+                            />
+                            <input
+                                type="hidden"
+                                name="uri"
+                                value="{{ .URI }}"
+                            />
+                            <button
+                                type="submit"
+                                class="text-primary hover:text-primary/80"
+                            >
+                                Add
+                            </button>
                         </form>
                     </td>
                 </tr>
@@ -53,38 +117,98 @@
 
     <div class="mt-8 flow-root">
         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+            <div
+                class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+            >
+                <div
+                    class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg"
+                >
                     <table class="min-w-full divide-y divide-surface-300">
                         <thead class="bg-surface-100">
                             <tr>
-                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-surface-900 sm:pl-6">Name</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">Host</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">Port</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">URI</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-900">Default</th>
-                                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
+                                <th
+                                    scope="col"
+                                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6"
+                                >
+                                    Name
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="px-3 py-3.5 text-left text-sm font-semibold"
+                                >
+                                    Host
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="px-3 py-3.5 text-left text-sm font-semibold"
+                                >
+                                    Port
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="px-3 py-3.5 text-left text-sm font-semibold"
+                                >
+                                    URI
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="px-3 py-3.5 text-left text-sm font-semibold"
+                                >
+                                    Default
+                                </th>
+                                <th
+                                    scope="col"
+                                    class="relative py-3.5 pl-3 pr-4 sm:pr-6"
+                                >
+                                    <span class="sr-only">Actions</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-surface-200 bg-surface-0">
                             {{ range .Printers }}
                             <tr>
-                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-surface-900 sm:pl-6">{{ .Name }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-surface-500">{{ .Host }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-surface-500">{{ .Port }}</td>
-                                <td class="px-3 py-4 text-sm text-surface-500">{{ .URI }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-surface-500">{{ if .IsDefault }}Yes{{ else }}No{{ end }}</td>
-                                <td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                <td
+                                    class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-6"
+                                >
+                                    {{ .Name }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    {{ .Host }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    {{ .Port }}
+                                </td>
+                                <td class="px-3 py-4 text-sm">{{ .URI }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    {{ if .IsDefault }}Yes{{ else }}No{{ end }}
+                                </td>
+                                <td
+                                    class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
+                                >
                                     {{ if not .IsDefault }}
-                                    <form action="/printers/{{ .ID }}/default" method="POST" hx-post="/printers/{{ .ID }}/default" hx-target="#page-content" hx-swap="innerHTML">
-                                        <button type="submit" class="text-primary hover:text-primary/80">Set default</button>
+                                    <form
+                                        action="/printers/{{ .ID }}/default"
+                                        method="POST"
+                                        hx-post="/printers/{{ .ID }}/default"
+                                        hx-target="#page-content"
+                                        hx-swap="innerHTML"
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="text-primary hover:text-primary/80"
+                                        >
+                                            Set default
+                                        </button>
                                     </form>
                                     {{ end }}
                                 </td>
                             </tr>
                             {{ else }}
                             <tr>
-                                <td colspan="6" class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-surface-900 sm:pl-6 text-center text-surface-500">
+                                <td
+                                    colspan="6"
+                                    class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-6 text-center"
+                                >
                                     No printers discovered yet.
                                 </td>
                             </tr>
