@@ -1,6 +1,6 @@
 {{ define "nav" }}
 {{ if .User }}
-<nav id="site-nav" class="bg-gray-800" hx-swap-oob="outerHTML">
+<nav id="site-nav" class="bg-secondary" hx-swap-oob="outerHTML">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between">
             <div class="flex items-center">
@@ -9,21 +9,21 @@
                 </div>
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4" hx-boost="true" hx-target="#page-content" hx-swap="innerHTML" hx-push-url="true">
-                        <a href="/" class="{{ if eq .Path "/" }}bg-gray-900 text-white{{ else }}text-gray-300 hover:bg-gray-700 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium"
+                        <a href="/" class="{{ if eq .Path "/" }}bg-black/30 text-white{{ else }}text-white/70 hover:bg-white/10 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium"
                             aria-current="page">Dashboard</a>
                         <a href="/feeds"
-                            class="{{ if or (eq .Path "/feeds") (eq .Path "/feed") }}bg-gray-900 text-white{{ else }}text-gray-300 hover:bg-gray-700 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium">Feeds</a>
+                            class="{{ if or (eq .Path "/feeds") (eq .Path "/feed") }}bg-black/30 text-white{{ else }}text-white/70 hover:bg-white/10 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium">Feeds</a>
                         <a href="/printers"
-                            class="{{ if eq .Path "/printers" }}bg-gray-900 text-white{{ else }}text-gray-300 hover:bg-gray-700 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium">Printers</a>
+                            class="{{ if eq .Path "/printers" }}bg-black/30 text-white{{ else }}text-white/70 hover:bg-white/10 hover:text-white{{ end }} rounded-md px-3 py-2 text-sm font-medium">Printers</a>
                     </div>
                 </div>
             </div>
             <div class="hidden md:block">
                 <div class="ml-4 flex items-center md:ml-6">
-                    <span class="text-gray-300 mr-4">{{ .User.Username }}</span>
+                    <span class="text-white/70 mr-4">{{ .User.Username }}</span>
                     <form action="/logout" method="POST">
                         <button type="submit"
-                            class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Logout</button>
+                            class="text-white/70 hover:bg-white/10 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Logout</button>
                     </form>
                 </div>
             </div>
@@ -34,7 +34,7 @@
 {{ end }}
 
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-100">
+<html lang="en" class="h-full bg-surface-50">
 
 <head>
     <meta charset="UTF-8">
