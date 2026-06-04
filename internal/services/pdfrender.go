@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/color"
 	_ "image/gif"  // register GIF decoder for image.DecodeConfig
 	_ "image/jpeg" // register JPEG decoder for image.DecodeConfig
 	_ "image/png"  // register PNG decoder for image.DecodeConfig
@@ -15,32 +16,30 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/signintech/gopdf"
 	"golang.org/x/net/html"
 )
 
-// A4 page geometry and margins, in PDF points (gopdf's default unit).
 const (
-	pdfPageWidth   = 595.0
-	pdfPageHeight  = 842.0
-	pdfMarginL     = 56.0
-	pdfMarginR     = 56.0
-	pdfMarginT     = 64.0
-	pdfMarginB     = 64.0
-	pdfColumnWidth = pdfPageWidth - pdfMarginL - pdfMarginR
-	pdfPageBottom  = pdfPageHeight - pdfMarginB
-
 	pdfUserAgent  = "rss-print/1.0 (+https://github.com/cole-maxwell1/rss-print)"
 	maxImageBytes = 8 << 20 // 8 MB cap per image
 )
 
+// Text colors used by the renderer.
+var (
+	colorBlack   = color.RGBA{0, 0, 0, 255}
+	colorCaption = color.RGBA{120, 120, 120, 255}
+	colorRule    = color.RGBA{200, 200, 200, 255}
+	colorQuote   = color.RGBA{180, 180, 180, 255}
+)
+
 // pdfRenderer walks cleaned article HTML and emits a paginated, newspaper-style
-// layout into a gopdf document. It owns the cursor and performs manual
-// pagination, since gopdf provides no automatic page breaks.
+// layout onto a canvas. It owns the cursor and performs manual pagination, since
+// the canvas provides no automatic page breaks. The same renderer drives either
+// the PDF or the raster backend via the canvas interface.
 type pdfRenderer struct {
-	pdf    *gopdf.GoPdf
-	family string
-	base   *url.URL
+	cv   canvas
+	geom pageGeometry
+	base *url.URL
 
 	x, y       float64
 	page       int
@@ -61,17 +60,17 @@ type word struct {
 	style int
 }
 
-func newPDFRenderer(pdf *gopdf.GoPdf, family, baseURL string) *pdfRenderer {
+func newPDFRenderer(cv canvas, geom pageGeometry, baseURL string) *pdfRenderer {
 	var base *url.URL
 	if u, err := url.Parse(strings.TrimSpace(baseURL)); err == nil && u.IsAbs() {
 		base = u
 	}
 	return &pdfRenderer{
-		pdf:        pdf,
-		family:     family,
+		cv:         cv,
+		geom:       geom,
 		base:       base,
-		x:          pdfMarginL,
-		y:          pdfMarginT,
+		x:          geom.marginL,
+		y:          geom.marginT,
 		page:       1,
 		heightByPt: make(map[float64]float64),
 		httpc:      &http.Client{Timeout: 15 * time.Second},
@@ -80,12 +79,10 @@ func newPDFRenderer(pdf *gopdf.GoPdf, family, baseURL string) *pdfRenderer {
 
 // renderDocument writes the title masthead followed by the article body.
 func (r *pdfRenderer) renderDocument(title, cleanHTML string) error {
-	r.writeWords([]word{{text: title, style: gopdf.Bold}}, 24, 0, 1.2)
+	r.writeWords([]word{{text: title, style: styleBold}}, 24, 0, 1.2, colorBlack)
 	r.y += 8
 	r.ensureSpace(2)
-	r.pdf.SetLineWidth(1)
-	r.pdf.SetStrokeColor(0, 0, 0)
-	r.pdf.Line(pdfMarginL, r.y, pdfMarginL+pdfColumnWidth, r.y)
+	r.cv.drawLine(r.geom.marginL, r.y, r.geom.marginL+r.geom.columnWidth(), r.y, 1, colorBlack)
 	r.y += 16
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(cleanHTML))
@@ -142,16 +139,16 @@ func (r *pdfRenderer) renderBlock(s *goquery.Selection) {
 func (r *pdfRenderer) renderHeading(s *goquery.Selection, level int) {
 	size := map[int]float64{1: 22, 2: 18, 3: 15, 4: 13}[level]
 	r.y += 8
-	r.writeWords(runsToWords(r.inlineRuns(s, gopdf.Bold)), size, 0, 1.2)
+	r.writeWords(runsToWords(r.inlineRuns(s, styleBold)), size, 0, 1.2, colorBlack)
 	r.y += 6
 }
 
 func (r *pdfRenderer) renderParagraph(s *goquery.Selection) {
-	words := runsToWords(r.inlineRuns(s, gopdf.Regular))
+	words := runsToWords(r.inlineRuns(s, styleRegular))
 	if len(words) == 0 {
 		return
 	}
-	r.writeWords(words, 11, 0, 1.4)
+	r.writeWords(words, 11, 0, 1.4, colorBlack)
 	r.y += 7
 }
 
@@ -167,10 +164,10 @@ func (r *pdfRenderer) renderList(s *goquery.Selection, ordered bool, depth int) 
 		if ordered {
 			marker = fmt.Sprintf("%d. ", item)
 		}
-		runs := append([]run{{text: marker, style: gopdf.Regular}}, r.inlineRuns(li, gopdf.Regular)...)
+		runs := append([]run{{text: marker, style: styleRegular}}, r.inlineRuns(li, styleRegular)...)
 		words := runsToWords(runs)
 		if len(words) > 0 {
-			r.writeWords(words, 11, indent, 1.35)
+			r.writeWords(words, 11, indent, 1.35, colorBlack)
 			r.y += 3
 		}
 		// Nested lists render one level deeper.
@@ -197,17 +194,17 @@ func (r *pdfRenderer) renderBlockquote(s *goquery.Selection) {
 		if len(c.Nodes) == 0 || c.Nodes[0].Type != html.ElementNode || !isBlockTag(c.Nodes[0].Data) {
 			return
 		}
-		words := runsToWords(r.inlineRuns(c, gopdf.Italic))
+		words := runsToWords(r.inlineRuns(c, styleItalic))
 		if len(words) > 0 {
-			r.writeWords(words, 11, indent, 1.4)
+			r.writeWords(words, 11, indent, 1.4, colorBlack)
 			r.y += 5
 			rendered = true
 		}
 	})
 	if !rendered {
-		words := runsToWords(r.inlineRuns(s, gopdf.Italic))
+		words := runsToWords(r.inlineRuns(s, styleItalic))
 		if len(words) > 0 {
-			r.writeWords(words, 11, indent, 1.4)
+			r.writeWords(words, 11, indent, 1.4, colorBlack)
 			r.y += 5
 		}
 	}
@@ -215,10 +212,7 @@ func (r *pdfRenderer) renderBlockquote(s *goquery.Selection) {
 	// Draw the quote rule only when the block stayed on a single page; spanning
 	// a page break is a known v1 limitation.
 	if r.page == startPage && r.y-5 > startY {
-		r.pdf.SetLineWidth(2)
-		r.pdf.SetStrokeColor(180, 180, 180)
-		r.pdf.Line(pdfMarginL+8, startY, pdfMarginL+8, r.y-5)
-		r.pdf.SetStrokeColor(0, 0, 0)
+		r.cv.drawLine(r.geom.marginL+8, startY, r.geom.marginL+8, r.y-5, 2, colorQuote)
 	}
 	r.y += 4
 }
@@ -232,10 +226,7 @@ func (r *pdfRenderer) renderFigure(s *goquery.Selection) {
 func (r *pdfRenderer) renderRule() {
 	r.y += 6
 	r.ensureSpace(2)
-	r.pdf.SetLineWidth(0.5)
-	r.pdf.SetStrokeColor(200, 200, 200)
-	r.pdf.Line(pdfMarginL, r.y, pdfMarginL+pdfColumnWidth, r.y)
-	r.pdf.SetStrokeColor(0, 0, 0)
+	r.cv.drawLine(r.geom.marginL, r.y, r.geom.marginL+r.geom.columnWidth(), r.y, 0.5, colorRule)
 	r.y += 8
 }
 
@@ -251,41 +242,35 @@ func (r *pdfRenderer) renderImage(src, caption string) {
 		return
 	}
 
+	colW := r.geom.columnWidth()
 	iw, ih := float64(cfg.Width), float64(cfg.Height)
-	dispW := pdfColumnWidth
+	dispW := colW
 	if iw < dispW {
 		dispW = iw
 	}
 	dispH := ih * (dispW / iw)
-	if maxH := pdfPageBottom - pdfMarginT; dispH > maxH {
+	if maxH := r.geom.bottom() - r.geom.marginT; dispH > maxH {
 		dispH = maxH
 		dispW = iw * (dispH / ih)
 	}
 
-	holder, err := gopdf.ImageHolderByBytes(data)
-	if err != nil {
-		return
-	}
-
 	r.y += 4
 	r.ensureSpace(dispH)
-	x := pdfMarginL + (pdfColumnWidth-dispW)/2
-	if err := r.pdf.ImageByHolder(holder, x, r.y, &gopdf.Rect{W: dispW, H: dispH}); err != nil {
+	x := r.geom.marginL + (colW-dispW)/2
+	if err := r.cv.drawImage(data, x, r.y, dispW, dispH); err != nil {
 		log.Printf("pdf: failed to place image %s: %v", src, err)
 		return
 	}
 	r.y += dispH + 4
 
 	if caption != "" {
-		r.pdf.SetTextColor(120, 120, 120)
-		r.writeWords([]word{{text: caption, style: gopdf.Italic}}, 9, 12, 1.3)
-		r.pdf.SetTextColor(0, 0, 0)
+		r.writeWords([]word{{text: caption, style: styleItalic}}, 9, 12, 1.3, colorCaption)
 		r.y += 6
 	}
 }
 
 // downloadImage fetches an image with a timeout and size cap, returning ok=false
-// for any error or for formats gopdf cannot embed (only jpeg/png/gif pass).
+// for any error or for formats the backends cannot embed (only jpeg/png/gif pass).
 func (r *pdfRenderer) downloadImage(rawURL string) ([]byte, string, bool) {
 	u := r.resolveURL(rawURL)
 	if u == "" {
@@ -360,9 +345,9 @@ func (r *pdfRenderer) inlineRuns(s *goquery.Selection, style int) []run {
 		case html.ElementNode:
 			switch node.Data {
 			case "strong", "b":
-				runs = append(runs, r.inlineRuns(c, style|gopdf.Bold)...)
+				runs = append(runs, r.inlineRuns(c, style|styleBold)...)
 			case "em", "i", "cite":
-				runs = append(runs, r.inlineRuns(c, style|gopdf.Italic)...)
+				runs = append(runs, r.inlineRuns(c, style|styleItalic)...)
 			case "br":
 				runs = append(runs, run{text: "\n", style: style})
 			default:
@@ -378,13 +363,13 @@ func (r *pdfRenderer) inlineRuns(s *goquery.Selection, style int) []run {
 // writeWords renders style-segmented words with greedy word-wrap at the given
 // font size and left indent, page-breaking per line. leading scales the base
 // line height.
-func (r *pdfRenderer) writeWords(words []word, size, indent, leading float64) {
+func (r *pdfRenderer) writeWords(words []word, size, indent, leading float64, col color.Color) {
 	if len(words) == 0 {
 		return
 	}
-	maxW := pdfColumnWidth - indent
+	maxW := r.geom.columnWidth() - indent
 	lh := r.lineHeight(size, leading)
-	spaceW := r.measure(" ", gopdf.Regular, size)
+	spaceW := r.cv.measureText(" ", styleRegular, size)
 
 	var line []word
 	var lineW float64
@@ -394,16 +379,14 @@ func (r *pdfRenderer) writeWords(words []word, size, indent, leading float64) {
 			return
 		}
 		r.ensureSpace(lh)
-		x := pdfMarginL + indent
+		x := r.geom.marginL + indent
 		for i, w := range line {
 			text := w.text
 			if i < len(line)-1 {
 				text += " "
 			}
-			r.setStyle(w.style, size)
-			r.pdf.SetXY(x, r.y)
-			r.pdf.Cell(nil, text)
-			x += r.measure(text, w.style, size)
+			r.cv.drawText(x, r.y, text, w.style, size, col)
+			x += r.cv.measureText(text, w.style, size)
 		}
 		r.y += lh
 		line = nil
@@ -415,7 +398,7 @@ func (r *pdfRenderer) writeWords(words []word, size, indent, leading float64) {
 			flush()
 			continue
 		}
-		ww := r.measure(w.text, w.style, size)
+		ww := r.cv.measureText(w.text, w.style, size)
 		add := ww
 		if len(line) > 0 {
 			add += spaceW
@@ -432,29 +415,11 @@ func (r *pdfRenderer) writeWords(words []word, size, indent, leading float64) {
 	flush()
 }
 
-func (r *pdfRenderer) measure(text string, style int, size float64) float64 {
-	r.setStyle(style, size)
-	w, err := r.pdf.MeasureTextWidth(text)
-	if err != nil {
-		return 0
-	}
-	return w
-}
-
-// setStyle selects the font face for the given style, degrading to Regular when
-// a face is not registered so a style switch never aborts rendering.
-func (r *pdfRenderer) setStyle(style int, size float64) {
-	if err := r.pdf.SetFontWithStyle(r.family, style, size); err != nil {
-		_ = r.pdf.SetFontWithStyle(r.family, gopdf.Regular, size)
-	}
-}
-
 func (r *pdfRenderer) lineHeight(size, leading float64) float64 {
 	base, ok := r.heightByPt[size]
 	if !ok {
-		r.setStyle(gopdf.Regular, size)
-		h, err := r.pdf.MeasureCellHeightByText("Hg")
-		if err != nil || h <= 0 {
+		h := r.cv.textHeight(size)
+		if h <= 0 {
 			h = size
 		}
 		base = h
@@ -464,16 +429,16 @@ func (r *pdfRenderer) lineHeight(size, leading float64) float64 {
 }
 
 func (r *pdfRenderer) ensureSpace(h float64) {
-	if r.y+h > pdfPageBottom {
+	if r.y+h > r.geom.bottom() {
 		r.newPage()
 	}
 }
 
 func (r *pdfRenderer) newPage() {
-	r.pdf.AddPage()
+	r.cv.newPage()
 	r.page++
-	r.x = pdfMarginL
-	r.y = pdfMarginT
+	r.x = r.geom.marginL
+	r.y = r.geom.marginT
 }
 
 // runsToWords splits runs into whitespace-delimited words, preserving the "\n"
@@ -485,7 +450,7 @@ func runsToWords(runs []run) []word {
 			words = append(words, word{text: "\n", style: rn.style})
 			continue
 		}
-		for _, f := range strings.Fields(rn.text) {
+		for f := range strings.FieldsSeq(rn.text) {
 			words = append(words, word{text: f, style: rn.style})
 		}
 	}

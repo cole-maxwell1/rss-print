@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"image"
 	"io"
 	"strings"
 
@@ -13,6 +14,16 @@ import (
 )
 
 const pdfFontFamily = "Roboto"
+
+// ArticleDocument bundles a rendered article in the forms the printer pipeline
+// needs: the cleaned source HTML (used to rasterize for raster-only printers) and
+// the prebuilt PDF (used for PDF-capable printers and the browser download).
+type ArticleDocument struct {
+	Title     string
+	BaseURL   string
+	CleanHTML string
+	PDF       []byte
+}
 
 // GenerateArticlePDF builds the PDF for an article from its URL. It fetches and
 // extracts the readable article content, then renders a newspaper-style layout.
@@ -26,11 +37,12 @@ func GenerateArticlePDF(title, url string) ([]byte, error) {
 	return GenerateArticlePDFFromHTML(title, baseURL, cleanHTML)
 }
 
-// BuildArticlePDF renders an article PDF using stored content when available.
-// When storedContent is empty, it extracts the article on demand and, if persist
-// is non-nil, hands the cleaned HTML back so the caller can backfill the row.
-// Falls back to a minimal document when no content can be obtained.
-func BuildArticlePDF(ctx context.Context, title, url, storedContent string, persist func(content string)) ([]byte, error) {
+// BuildArticleDocument resolves an article's cleaned HTML (using stored content
+// when available, otherwise extracting on demand and backfilling via persist),
+// renders the PDF, and returns both forms. When no content can be obtained it
+// synthesizes a minimal document referencing the source URL so the raster path
+// always has HTML to render.
+func BuildArticleDocument(ctx context.Context, title, url, storedContent string, persist func(content string)) (*ArticleDocument, error) {
 	content := storedContent
 	if strings.TrimSpace(content) == "" {
 		clean, _, err := ExtractArticleHTML(ctx, url, "")
@@ -42,9 +54,25 @@ func BuildArticlePDF(ctx context.Context, title, url, storedContent string, pers
 		}
 	}
 	if strings.TrimSpace(content) == "" {
-		return GeneratePDF(title, "Original URL: "+url)
+		content = "<p>Original URL: " + html.EscapeString(url) + "</p>"
 	}
-	return GenerateArticlePDFFromHTML(title, url, content)
+
+	pdfBytes, err := GenerateArticlePDFFromHTML(title, url, content)
+	if err != nil {
+		return nil, err
+	}
+	return &ArticleDocument{Title: title, BaseURL: url, CleanHTML: content, PDF: pdfBytes}, nil
+}
+
+// BuildArticlePDF renders an article PDF using stored content when available.
+// When storedContent is empty, it extracts the article on demand and, if persist
+// is non-nil, hands the cleaned HTML back so the caller can backfill the row.
+func BuildArticlePDF(ctx context.Context, title, url, storedContent string, persist func(content string)) ([]byte, error) {
+	doc, err := BuildArticleDocument(ctx, title, url, storedContent, persist)
+	if err != nil {
+		return nil, err
+	}
+	return doc.PDF, nil
 }
 
 // GenerateArticlePDFFromHTML renders a newspaper-style PDF from already-cleaned
@@ -60,7 +88,8 @@ func GenerateArticlePDFFromHTML(title, baseURL, cleanHTML string) ([]byte, error
 
 	pdf.AddPage()
 
-	r := newPDFRenderer(&pdf, pdfFontFamily, baseURL)
+	cv := newGopdfCanvas(&pdf, pdfFontFamily)
+	r := newPDFRenderer(cv, a4Geometry, baseURL)
 	if err := r.renderDocument(title, cleanHTML); err != nil {
 		return nil, fmt.Errorf("failed to render article: %w", err)
 	}
@@ -70,6 +99,22 @@ func GenerateArticlePDFFromHTML(title, baseURL, cleanHTML string) ([]byte, error
 		return nil, fmt.Errorf("failed to generate pdf buffer: %w", err)
 	}
 	return b.Bytes(), nil
+}
+
+// RenderArticleToImages renders cleaned article HTML to one bitmap per page at the
+// given resolution, for encoding to a printer-native raster format. Pages use US
+// Letter geometry to match the common na_letter driverless default.
+func RenderArticleToImages(title, baseURL, cleanHTML string, dpi float64) ([]image.Image, error) {
+	cv, err := newImageCanvas(letterGeometry, dpi, pdfFontFamily)
+	if err != nil {
+		return nil, err
+	}
+
+	r := newPDFRenderer(cv, letterGeometry, baseURL)
+	if err := r.renderDocument(title, cleanHTML); err != nil {
+		return nil, fmt.Errorf("failed to render article to raster: %w", err)
+	}
+	return cv.pages(), nil
 }
 
 // GeneratePDF creates a simple plain-text PDF document. Retained as a fallback
@@ -87,17 +132,17 @@ func GeneratePDF(title, content string) ([]byte, error) {
 	if err := pdf.SetFontWithStyle(pdfFontFamily, gopdf.Bold, 20); err != nil {
 		return nil, err
 	}
-	pdf.SetXY(pdfMarginL, pdfMarginT)
+	pdf.SetXY(a4Geometry.marginL, a4Geometry.marginT)
 	pdf.Cell(nil, title)
 	pdf.Br(28)
 
 	if err := pdf.SetFontWithStyle(pdfFontFamily, gopdf.Regular, 12); err != nil {
 		return nil, err
 	}
-	pdf.SetX(pdfMarginL)
+	pdf.SetX(a4Geometry.marginL)
 
 	cleanText := stripHTML(content)
-	if err := pdf.MultiCell(&gopdf.Rect{W: pdfColumnWidth, H: 800}, cleanText); err != nil {
+	if err := pdf.MultiCell(&gopdf.Rect{W: a4Geometry.columnWidth(), H: 800}, cleanText); err != nil {
 		return nil, fmt.Errorf("failed to write content: %w", err)
 	}
 

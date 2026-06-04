@@ -156,20 +156,21 @@ func (w *Worker) executeJob(job *models.PrintJob) {
 		}
 	}
 
-	// 1. Generate PDF
-	pdfBytes, err := services.BuildArticlePDF(context.Background(), article.Title, article.URL, article.Content, func(content string) {
+	// 1. Render the article (cleaned HTML + prebuilt PDF). PrintDocument picks the
+	// wire format per printer and rasterizes from the HTML when needed.
+	doc, err := services.BuildArticleDocument(context.Background(), article.Title, article.URL, article.Content, func(content string) {
 		if uerr := w.Articles.UpdateContent(article.ID, content); uerr != nil {
 			log.Printf("Failed to backfill content for article %d: %v", article.ID, uerr)
 		}
 	})
 	if err != nil {
-		log.Printf("Failed to generate PDF for job %d: %v", job.ID, err)
+		log.Printf("Failed to render article for job %d: %v", job.ID, err)
 		w.markJobFailed(job, err.Error())
 		return
 	}
 
-	// 2. Print PDF
-	err = services.PrintPDF(printer.URI, pdfBytes, "Article: "+article.Title)
+	// 2. Print
+	err = services.PrintDocument(printer.URI, doc, "Article: "+article.Title)
 	if err != nil {
 		log.Printf("Failed to print job %d: %v", job.ID, err)
 		w.markJobFailed(job, err.Error())

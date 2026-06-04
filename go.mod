@@ -4,13 +4,16 @@ go 1.26.1
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
+	github.com/fogleman/gg v1.3.0
 	github.com/go-shiori/go-readability v0.0.0-20251205110129-5db1dc9836f0
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/gorilla/sessions v1.4.0
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/phin1x/go-ipp v1.7.0
 	github.com/signintech/gopdf v0.36.1
 	golang.org/x/crypto v0.52.0
+	golang.org/x/image v0.41.0
 	golang.org/x/net v0.54.0
 	modernc.org/sqlite v1.50.1
 	xorm.io/xorm v1.3.11
