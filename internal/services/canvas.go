@@ -6,13 +6,15 @@ import (
 	"github.com/signintech/gopdf"
 )
 
-// Font style flags. The values match gopdf's Regular/Italic/Bold constants so the
-// gopdf backend can pass them through unchanged; the image backend maps them to
-// the corresponding embedded face.
+// Font style flags. The values match gopdf's Regular/Italic/Bold/Underline
+// constants so the gopdf backend can pass them through unchanged; the image
+// backend maps them to the corresponding embedded face. styleUnderline is an
+// independent bit that combines with the face flags (e.g. styleBold|styleUnderline).
 const (
-	styleRegular = 0
-	styleItalic  = 1
-	styleBold    = 2
+	styleRegular   = 0
+	styleItalic    = 1
+	styleBold      = 2
+	styleUnderline = 4
 )
 
 // pageGeometry describes a page in PDF points (1/72 inch): physical size and

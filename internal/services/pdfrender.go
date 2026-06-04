@@ -79,7 +79,7 @@ func newPDFRenderer(cv canvas, geom pageGeometry, baseURL string) *pdfRenderer {
 
 // renderDocument writes the title masthead followed by the article body.
 func (r *pdfRenderer) renderDocument(title, cleanHTML string) error {
-	r.writeWords([]word{{text: title, style: styleBold}}, 24, 0, 1.2, colorBlack)
+	r.writeWords(runsToWords([]run{{text: title, style: styleBold}}), 24, 0, 1.2, colorBlack)
 	r.y += 8
 	r.ensureSpace(2)
 	r.cv.drawLine(r.geom.marginL, r.y, r.geom.marginL+r.geom.columnWidth(), r.y, 1, colorBlack)
@@ -348,6 +348,8 @@ func (r *pdfRenderer) inlineRuns(s *goquery.Selection, style int) []run {
 				runs = append(runs, r.inlineRuns(c, style|styleBold)...)
 			case "em", "i", "cite":
 				runs = append(runs, r.inlineRuns(c, style|styleItalic)...)
+			case "a":
+				runs = append(runs, r.inlineRuns(c, style|styleUnderline)...)
 			case "br":
 				runs = append(runs, run{text: "\n", style: style})
 			default:

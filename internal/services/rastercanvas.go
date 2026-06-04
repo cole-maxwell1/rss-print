@@ -7,12 +7,13 @@ import (
 	"image/color"
 	"math"
 
+	"rss-print/ui"
+
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/draw"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
-	"rss-print/ui"
 )
 
 // imageCanvas renders the article layout to one RGBA bitmap per page. The
@@ -144,16 +145,31 @@ func (c *imageCanvas) textHeight(size float64) float64 {
 func (c *imageCanvas) drawText(x, y float64, text string, style int, size float64, col color.Color) {
 	face := c.face(style, size)
 	ascentPx := float64(face.Metrics().Ascent) / 64.0
+	baselinePx := y*c.scale + ascentPx
 	d := &font.Drawer{
 		Dst:  c.cur,
 		Src:  image.NewUniform(col),
 		Face: face,
 		Dot: fixed.Point26_6{
 			X: fixed.Int26_6(math.Round(x * c.scale * 64)),
-			Y: fixed.Int26_6(math.Round((y*c.scale + ascentPx) * 64)),
+			Y: fixed.Int26_6(math.Round(baselinePx * 64)),
 		},
 	}
 	d.DrawString(text)
+
+	// gopdf draws underlines natively; the raster backend strokes one manually.
+	// Offset and thickness scale with the font size, matching typographic norms.
+	if style&styleUnderline != 0 {
+		advance := float64(font.MeasureString(face, text)) / 64.0 // device px
+		offsetPx := math.Max(1, size*0.12*c.scale)
+		thicknessPx := math.Max(1, size*0.06*c.scale)
+		x1 := x * c.scale
+		yLine := baselinePx + offsetPx
+		c.dc.SetColor(col)
+		c.dc.SetLineWidth(thicknessPx)
+		c.dc.DrawLine(x1, yLine, x1+advance, yLine)
+		c.dc.Stroke()
+	}
 }
 
 func (c *imageCanvas) drawLine(x1, y1, x2, y2, width float64, col color.Color) {
