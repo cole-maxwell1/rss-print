@@ -3,12 +3,14 @@ package services
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
-	nurl "net/url"
+	"net/url"
 	"strings"
 	"time"
 
 	readability "github.com/go-shiori/go-readability"
+	"golang.org/x/net/html"
 )
 
 // minFeedContentLen is the plain-text length, in characters, above which the
@@ -36,7 +38,7 @@ func ExtractArticleHTML(ctx context.Context, articleURL, fallbackHTML string) (c
 		return "", baseURL, fmt.Errorf("no article url or content to extract")
 	}
 
-	parsed, perr := nurl.Parse(baseURL)
+	parsed, perr := url.Parse(baseURL)
 	if perr != nil {
 		return fallbackHTML, baseURL, fmt.Errorf("parse article url: %w", perr)
 	}
@@ -68,4 +70,25 @@ func ExtractArticleHTML(ctx context.Context, articleURL, fallbackHTML string) (c
 		return fallbackHTML, baseURL, nil
 	}
 	return article.Content, baseURL, nil
+}
+
+// stripHTML returns the concatenated text content of an HTML fragment, dropping
+// all tags. On a tokenizer error it returns the original input unchanged.
+func stripHTML(htmlStr string) string {
+	tokenizer := html.NewTokenizer(strings.NewReader(htmlStr))
+	var text strings.Builder
+
+	for {
+		tt := tokenizer.Next()
+		if tt == html.ErrorToken {
+			if tokenizer.Err() == io.EOF {
+				return text.String()
+			}
+			return htmlStr // fallback
+		}
+
+		if tt == html.TextToken {
+			text.WriteString(string(tokenizer.Text()))
+		}
+	}
 }

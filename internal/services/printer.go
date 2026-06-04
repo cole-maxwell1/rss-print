@@ -123,7 +123,7 @@ func PrintDocument(printerURI string, doc *ArticleDocument, jobName string) erro
 	)
 	renderImages := func() ([]image.Image, error) {
 		if !didRender {
-			cachedImgs, cachedErr = RenderArticleToImages(doc.Title, doc.BaseURL, doc.CleanHTML, rasterDPI)
+			cachedImgs, cachedErr = renderArticleToImages(doc.Title, doc.BaseURL, doc.CleanHTML, rasterDPI)
 			didRender = true
 		}
 		return cachedImgs, cachedErr

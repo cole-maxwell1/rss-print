@@ -156,9 +156,9 @@ func TestRenderArticleToImagesPWG(t *testing.T) {
 		`<ul><li>First item</li><li>Second item</li></ul>` +
 		`<blockquote>A short quotation.</blockquote>`
 
-	imgs, err := RenderArticleToImages("Round Trip Headline", "https://example.com", html, 120)
+	imgs, err := renderArticleToImages("Round Trip Headline", "https://example.com", html, 120)
 	if err != nil {
-		t.Fatalf("RenderArticleToImages: %v", err)
+		t.Fatalf("renderArticleToImages: %v", err)
 	}
 	if len(imgs) == 0 {
 		t.Fatal("no pages rendered")

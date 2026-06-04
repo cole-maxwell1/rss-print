@@ -5,12 +5,12 @@ import (
 	"context"
 	"fmt"
 	"image"
-	"io"
 	"strings"
+
+	"rss-print/ui"
 
 	"github.com/signintech/gopdf"
 	"golang.org/x/net/html"
-	"rss-print/ui"
 )
 
 const pdfFontFamily = "Roboto"
@@ -23,18 +23,6 @@ type ArticleDocument struct {
 	BaseURL   string
 	CleanHTML string
 	PDF       []byte
-}
-
-// GenerateArticlePDF builds the PDF for an article from its URL. It fetches and
-// extracts the readable article content, then renders a newspaper-style layout.
-// Prefer GenerateArticlePDFFromHTML when cleaned content is already stored.
-func GenerateArticlePDF(title, url string) ([]byte, error) {
-	cleanHTML, baseURL, err := ExtractArticleHTML(context.Background(), url, "")
-	if err != nil || strings.TrimSpace(cleanHTML) == "" {
-		// Fall back to a minimal document referencing the source.
-		return GeneratePDF(title, "Original URL: "+url)
-	}
-	return GenerateArticlePDFFromHTML(title, baseURL, cleanHTML)
 }
 
 // BuildArticleDocument resolves an article's cleaned HTML (using stored content
@@ -57,7 +45,7 @@ func BuildArticleDocument(ctx context.Context, title, url, storedContent string,
 		content = "<p>Original URL: " + html.EscapeString(url) + "</p>"
 	}
 
-	pdfBytes, err := GenerateArticlePDFFromHTML(title, url, content)
+	pdfBytes, err := generateArticlePDFFromHTML(title, url, content)
 	if err != nil {
 		return nil, err
 	}
@@ -75,10 +63,10 @@ func BuildArticlePDF(ctx context.Context, title, url, storedContent string, pers
 	return doc.PDF, nil
 }
 
-// GenerateArticlePDFFromHTML renders a newspaper-style PDF from already-cleaned
+// generateArticlePDFFromHTML renders a newspaper-style PDF from already-cleaned
 // article HTML. baseURL resolves relative image/link references; pass the article
 // URL when known.
-func GenerateArticlePDFFromHTML(title, baseURL, cleanHTML string) ([]byte, error) {
+func generateArticlePDFFromHTML(title, baseURL, cleanHTML string) ([]byte, error) {
 	pdf := gopdf.GoPdf{}
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
 
@@ -101,10 +89,10 @@ func GenerateArticlePDFFromHTML(title, baseURL, cleanHTML string) ([]byte, error
 	return b.Bytes(), nil
 }
 
-// RenderArticleToImages renders cleaned article HTML to one bitmap per page at the
+// renderArticleToImages renders cleaned article HTML to one bitmap per page at the
 // given resolution, for encoding to a printer-native raster format. Pages use US
 // Letter geometry to match the common na_letter driverless default.
-func RenderArticleToImages(title, baseURL, cleanHTML string, dpi float64) ([]image.Image, error) {
+func renderArticleToImages(title, baseURL, cleanHTML string, dpi float64) ([]image.Image, error) {
 	cv, err := newImageCanvas(letterGeometry, dpi, pdfFontFamily)
 	if err != nil {
 		return nil, err
@@ -115,42 +103,6 @@ func RenderArticleToImages(title, baseURL, cleanHTML string, dpi float64) ([]ima
 		return nil, fmt.Errorf("failed to render article to raster: %w", err)
 	}
 	return cv.pages(), nil
-}
-
-// GeneratePDF creates a simple plain-text PDF document. Retained as a fallback
-// for content that is not HTML or when extraction fails.
-func GeneratePDF(title, content string) ([]byte, error) {
-	pdf := gopdf.GoPdf{}
-	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
-
-	if err := loadFonts(&pdf); err != nil {
-		return nil, err
-	}
-
-	pdf.AddPage()
-
-	if err := pdf.SetFontWithStyle(pdfFontFamily, gopdf.Bold, 20); err != nil {
-		return nil, err
-	}
-	pdf.SetXY(a4Geometry.marginL, a4Geometry.marginT)
-	pdf.Cell(nil, title)
-	pdf.Br(28)
-
-	if err := pdf.SetFontWithStyle(pdfFontFamily, gopdf.Regular, 12); err != nil {
-		return nil, err
-	}
-	pdf.SetX(a4Geometry.marginL)
-
-	cleanText := stripHTML(content)
-	if err := pdf.MultiCell(&gopdf.Rect{W: a4Geometry.columnWidth(), H: 800}, cleanText); err != nil {
-		return nil, fmt.Errorf("failed to write content: %w", err)
-	}
-
-	var b bytes.Buffer
-	if _, err := pdf.WriteTo(&b); err != nil {
-		return nil, fmt.Errorf("failed to generate pdf buffer: %w", err)
-	}
-	return b.Bytes(), nil
 }
 
 // loadFonts registers the Roboto family faces (Regular, Bold, Italic) from the
@@ -184,23 +136,4 @@ func loadFonts(pdf *gopdf.GoPdf) error {
 	}
 
 	return nil
-}
-
-func stripHTML(htmlStr string) string {
-	tokenizer := html.NewTokenizer(strings.NewReader(htmlStr))
-	var text strings.Builder
-
-	for {
-		tt := tokenizer.Next()
-		if tt == html.ErrorToken {
-			if tokenizer.Err() == io.EOF {
-				return text.String()
-			}
-			return htmlStr // fallback
-		}
-
-		if tt == html.TextToken {
-			text.WriteString(string(tokenizer.Text()))
-		}
-	}
 }

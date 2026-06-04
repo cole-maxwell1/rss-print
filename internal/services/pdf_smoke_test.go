@@ -21,7 +21,7 @@ func TestRenderNewspaperPDF(t *testing.T) {
 	body.WriteString(`<ol><li>Ordered one</li><li>Ordered two</li></ol>`)
 	body.WriteString(`<blockquote><p>A quoted passage rendered in italics with an accent rule beside it.</p></blockquote>`)
 
-	pdf, err := GenerateArticlePDFFromHTML("Smoke Test Headline", "https://example.com/article", body.String())
+	pdf, err := generateArticlePDFFromHTML("Smoke Test Headline", "https://example.com/article", body.String())
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
